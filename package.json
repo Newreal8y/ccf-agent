@@ -1,0 +1,38 @@
+{
+  "name": "audit-platform",
+  "version": "3.2.0",
+  "description": "TrustElix Audit Platform - Enterprise Compliance Assessment Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "compliance",
+    "security",
+    "audit",
+    "iso27001",
+    "nist",
+    "soc2",
+    "hipaa",
+    "pci-dss",
+    "gdpr",
+    "nist-800-171",
+    "cmmc"
+  ],
+  "author": "TrustElix",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "nodemailer": "^6.9.16",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-microsoft": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
