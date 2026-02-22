@@ -1,0 +1,24 @@
+{
+  "name": "trustelix-enterprise",
+  "version": "4.4.4",
+  "description": "TrustElix Enterprise Compliance Assessment Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "cors": "^2.8.5",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^6.9.7",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-github2": "^0.1.12",
+    "passport-microsoft": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

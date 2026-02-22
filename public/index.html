@@ -1,0 +1,2900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustElix - Enterprise Compliance Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+            sidebar: { DEFAULT: '#0f172a', hover: '#1e293b', active: '#334155' },
+            success: { light: '#dcfce7', DEFAULT: '#22c55e', dark: '#166534' },
+            warning: { light: '#fef3c7', DEFAULT: '#f59e0b', dark: '#92400e' },
+            danger: { light: '#fee2e2', DEFAULT: '#ef4444', dark: '#991b1b' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    
+    .sidebar { width: 260px; transition: width 0.3s ease; }
+    .sidebar.collapsed { width: 72px; }
+    .sidebar.collapsed .nav-text, .sidebar.collapsed .org-name, .sidebar.collapsed .logo-text { display: none; }
+    
+    .nav-item { transition: all 0.2s ease; }
+    .nav-item:hover { background: rgba(255,255,255,0.08); }
+    .nav-item.active { background: rgba(59, 130, 246, 0.2); border-left: 3px solid #3b82f6; }
+    
+    .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; }
+    .card-hover:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-1px); }
+    
+    .progress-ring { transform: rotate(-90deg); }
+    .progress-ring-circle { transition: stroke-dashoffset 0.5s ease; }
+    
+    .status-passing { background: #dcfce7; color: #166534; }
+    .status-failing { background: #fee2e2; color: #991b1b; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    
+    .framework-card { transition: all 0.2s ease; cursor: pointer; }
+    .framework-card:hover { border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59,130,246,0.15); }
+    .framework-card.selected { border-color: #3b82f6; background: #eff6ff; }
+    
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.3s ease; }
+    
+    .control-row { transition: background 0.15s ease; }
+    .control-row:hover { background: #f8fafc; }
+    
+    .maturity-radio { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; font-weight: 600; font-size: 12px; }
+    .maturity-radio:hover { transform: scale(1.1); }
+    .maturity-0 { background: #f3f4f6; color: #6b7280; }
+    .maturity-0.selected { background: #6b7280; color: white; }
+    .maturity-1 { background: #fef3c7; color: #92400e; }
+    .maturity-1.selected { background: #f59e0b; color: white; }
+    .maturity-2 { background: #fde68a; color: #92400e; }
+    .maturity-2.selected { background: #eab308; color: white; }
+    .maturity-3 { background: #bfdbfe; color: #1e40af; }
+    .maturity-3.selected { background: #3b82f6; color: white; }
+    .maturity-4 { background: #86efac; color: #166534; }
+    .maturity-4.selected { background: #22c55e; color: white; }
+    .maturity-5 { background: #4ade80; color: #166534; }
+    .maturity-5.selected { background: #16a34a; color: white; }
+    
+    @media print {
+      .no-print { display: none !important; }
+      .sidebar { display: none !important; }
+      .main-content { margin-left: 0 !important; }
+    }
+    
+    .ai-response h2 { font-size: 1.25rem; font-weight: 700; color: #1e3a8a; margin-top: 1.5rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #3b82f6; }
+    .ai-response h3 { font-size: 1.1rem; font-weight: 600; color: #1e40af; margin-top: 1rem; margin-bottom: 0.5rem; }
+    .ai-response ul, .ai-response ol { margin-left: 1.5rem; margin-bottom: 0.75rem; }
+    .ai-response li { margin-bottom: 0.35rem; line-height: 1.6; }
+    .ai-response p { margin-bottom: 0.75rem; line-height: 1.7; }
+    .ai-response table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
+    .ai-response th { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 0.75rem; text-align: left; }
+    .ai-response td { padding: 0.75rem; border: 1px solid #e5e7eb; }
+    .ai-response tr:nth-child(even) { background: #f9fafb; }
+    
+    .prose h2 { font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-top: 1.5rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .prose th { background: #f3f4f6; padding: 0.75rem; text-align: left; font-weight: 600; border: 1px solid #e5e7eb; }
+    .prose td { padding: 0.75rem; border: 1px solid #e5e7eb; }
+    
+    /* Toast Notification System */
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      pointer-events: auto;
+      animation: toastSlideIn 0.3s ease;
+      max-width: 400px;
+    }
+    .toast.toast-success { border-left: 4px solid #22c55e; }
+    .toast.toast-error { border-left: 4px solid #ef4444; }
+    .toast.toast-warning { border-left: 4px solid #f59e0b; }
+    .toast.toast-info { border-left: 4px solid #3b82f6; }
+    .toast-icon { font-size: 1.25rem; flex-shrink: 0; }
+    .toast-success .toast-icon { color: #22c55e; }
+    .toast-error .toast-icon { color: #ef4444; }
+    .toast-warning .toast-icon { color: #f59e0b; }
+    .toast-info .toast-icon { color: #3b82f6; }
+    .toast-content { flex: 1; }
+    .toast-title { font-weight: 600; color: #111827; }
+    .toast-message { font-size: 0.875rem; color: #6b7280; margin-top: 0.125rem; }
+    .toast-close { color: #9ca3af; cursor: pointer; padding: 0.25rem; }
+    .toast-close:hover { color: #6b7280; }
+    @keyframes toastSlideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .toast.toast-exit {
+      animation: toastSlideOut 0.3s ease forwards;
+    }
+    @keyframes toastSlideOut {
+      to { transform: translateX(100%); opacity: 0; }
+    }
+    
+    /* Confirmation Dialog */
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.2s ease;
+    }
+    .confirm-dialog {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+      max-width: 400px;
+      width: 100%;
+      animation: confirmPopIn 0.2s ease;
+    }
+    @keyframes confirmPopIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .confirm-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .confirm-icon {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .confirm-icon.danger { background: #fef2f2; color: #ef4444; }
+    .confirm-icon.warning { background: #fffbeb; color: #f59e0b; }
+    .confirm-icon.info { background: #eff6ff; color: #3b82f6; }
+    .confirm-icon.success { background: #f0fdf4; color: #22c55e; }
+    .confirm-body { padding: 1.5rem; }
+    .confirm-footer {
+      display: flex;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      background: #f9fafb;
+      border-radius: 0 0 1rem 1rem;
+    }
+    .confirm-btn {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .confirm-btn-cancel {
+      background: white;
+      border: 1px solid #e5e7eb;
+      color: #374151;
+    }
+    .confirm-btn-cancel:hover { background: #f9fafb; }
+    .confirm-btn-danger {
+      background: #ef4444;
+      border: 1px solid #ef4444;
+      color: white;
+    }
+    .confirm-btn-danger:hover { background: #dc2626; }
+    .confirm-btn-primary {
+      background: #3b82f6;
+      border: 1px solid #3b82f6;
+      color: white;
+    }
+    .confirm-btn-primary:hover { background: #2563eb; }
+    
+    /* Slide-out Panel Styles */
+    .slide-panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 40;
+      opacity: 0;
+      animation: fadeIn 0.2s ease forwards;
+    }
+    .slide-panel {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      background: white;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      animation: slideIn 0.3s ease forwards;
+    }
+    .slide-panel-wide {
+      max-width: 640px;
+    }
+    @keyframes slideIn {
+      to { right: 0; }
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+    .slide-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+    .slide-panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+    .slide-panel-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+    .framework-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: white;
+    }
+    .framework-chip:hover {
+      border-color: #93c5fd;
+      background: #eff6ff;
+    }
+    .framework-chip.selected {
+      border-color: #3b82f6;
+      background: #dbeafe;
+    }
+    .framework-chip.selected .chip-check {
+      display: flex;
+    }
+    .chip-check {
+      display: none;
+      width: 1.25rem;
+      height: 1.25rem;
+      background: #3b82f6;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.7rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div id="app"></div>
+
+  <script>
+    // =========================================================================
+    // APPLICATION STATE
+    // =========================================================================
+    const state = {
+      isAuthenticated: false,
+      token: localStorage.getItem('trustelix_token'),
+      user: null,
+      authMode: 'login',
+      resetToken: null,
+      
+      companies: [],
+      selectedCompany: null,
+      assessments: {},
+      history: [],
+      analytics: null,
+      activeTab: 'dashboard',
+      selectedFramework: null,
+      expandedDomains: {},
+      sidebarCollapsed: false,
+      loading: false,
+      error: null,
+      successMessage: null,
+      showAddCompanyForm: false,
+      
+      // Reports
+      selectedReport: null,
+      savedReports: [],
+      showSavedReports: false,
+      
+      // AI Analysis
+      aiResponse: null,
+      aiLoading: false,
+      aiError: null,
+      aiSelectedFramework: null,
+      aiSelectedFrameworks: [], // For multi-select (all reports)
+      aiAnalysisType: null,
+      aiReportTitle: null,
+      aiReportTimestamp: null,
+      aiAbortController: null,
+      
+      // Slide-out Panels (replacing modals)
+      slidePanel: null, // 'framework-select' | 'feedback' | 'create-user' | 'saved-reports' | null
+      
+      // Toast Notifications
+      toasts: [],
+      
+      // Confirmation Dialog
+      confirmDialog: null, // { title, message, type, confirmText, cancelText, onConfirm, onCancel }
+      
+      // OAuth
+      oauthConfig: { google: false, github: false, microsoft: false, emailConfigured: false },
+      
+      // Admin
+      adminUsers: [],
+      adminAnalytics: null,
+      adminErrors: [],
+      adminFeedback: [],
+      adminTab: 'users',
+      
+      // Feedback
+      feedbackRating: 0,
+      feedbackType: 'feedback',
+      feedbackMessage: '',
+      
+      // Create User Form
+      createUserForm: { name: '', username: '', email: '', password: '', role: 'user' }
+    };
+
+    // Control name mappings for ISO 27001
+    const ISO27001_CONTROLS = {
+      '5.1': 'Policies for information security', '5.2': 'Information security roles and responsibilities',
+      '5.3': 'Segregation of duties', '5.4': 'Management responsibilities', '5.5': 'Contact with authorities',
+      '5.6': 'Contact with special interest groups', '5.7': 'Threat intelligence', '5.8': 'Information security in project management',
+      '5.9': 'Inventory of information and other assets', '5.10': 'Acceptable use of information and assets',
+      '5.11': 'Return of assets', '5.12': 'Classification of information', '5.13': 'Labelling of information',
+      '5.14': 'Information transfer', '5.15': 'Access control', '5.16': 'Identity management',
+      '5.17': 'Authentication information', '5.18': 'Access rights', '5.19': 'Information security in supplier relationships',
+      '5.20': 'Addressing security within supplier agreements', '5.21': 'Managing information security in the ICT supply chain',
+      '5.22': 'Monitoring, review and change management of supplier services', '5.23': 'Information security for use of cloud services',
+      '5.24': 'Information security incident management planning', '5.25': 'Assessment and decision on information security events',
+      '5.26': 'Response to information security incidents', '5.27': 'Learning from information security incidents',
+      '5.28': 'Collection of evidence', '5.29': 'Information security during disruption', '5.30': 'ICT readiness for business continuity',
+      '5.31': 'Legal, statutory, regulatory and contractual requirements', '5.32': 'Intellectual property rights',
+      '5.33': 'Protection of records', '5.34': 'Privacy and protection of PII', '5.35': 'Independent review of information security',
+      '5.36': 'Compliance with policies, rules and standards', '5.37': 'Documented operating procedures',
+      '6.1': 'Screening', '6.2': 'Terms and conditions of employment', '6.3': 'Information security awareness, education and training',
+      '6.4': 'Disciplinary process', '6.5': 'Responsibilities after termination or change of employment',
+      '6.6': 'Confidentiality or non-disclosure agreements', '6.7': 'Remote working', '6.8': 'Information security event reporting',
+      '7.1': 'Physical security perimeters', '7.2': 'Physical entry', '7.3': 'Securing offices, rooms and facilities',
+      '7.4': 'Physical security monitoring', '7.5': 'Protecting against physical and environmental threats',
+      '7.6': 'Working in secure areas', '7.7': 'Clear desk and clear screen', '7.8': 'Equipment siting and protection',
+      '7.9': 'Security of assets off-premises', '7.10': 'Storage media', '7.11': 'Supporting utilities',
+      '7.12': 'Cabling security', '7.13': 'Equipment maintenance', '7.14': 'Secure disposal or re-use of equipment',
+      '8.1': 'User endpoint devices', '8.2': 'Privileged access rights', '8.3': 'Information access restriction',
+      '8.4': 'Access to source code', '8.5': 'Secure authentication', '8.6': 'Capacity management',
+      '8.7': 'Protection against malware', '8.8': 'Management of technical vulnerabilities', '8.9': 'Configuration management',
+      '8.10': 'Information deletion', '8.11': 'Data masking', '8.12': 'Data leakage prevention',
+      '8.13': 'Information backup', '8.14': 'Redundancy of information processing facilities', '8.15': 'Logging',
+      '8.16': 'Monitoring activities', '8.17': 'Clock synchronization', '8.18': 'Use of privileged utility programs',
+      '8.19': 'Installation of software on operational systems', '8.20': 'Networks security', '8.21': 'Security of network services',
+      '8.22': 'Segregation of networks', '8.23': 'Web filtering', '8.24': 'Use of cryptography',
+      '8.25': 'Secure development life cycle', '8.26': 'Application security requirements', '8.27': 'Secure system architecture and engineering principles',
+      '8.28': 'Secure coding', '8.29': 'Security testing in development and acceptance', '8.30': 'Outsourced development',
+      '8.31': 'Separation of development, test and production environments', '8.32': 'Change management',
+      '8.33': 'Test information', '8.34': 'Protection of information systems during audit testing'
+    };
+
+    // ISO 27001 Clause Requirements (Clauses 4-10)
+    const ISO27001_CLAUSES = {
+      '4.1': 'Understanding the organization and its context',
+      '4.2': 'Understanding the needs and expectations of interested parties',
+      '4.3': 'Determining the scope of the ISMS',
+      '4.4': 'Information security management system',
+      '5c.1': 'Leadership and commitment',
+      '5c.2': 'Policy - Establishing information security policy',
+      '5c.3': 'Organizational roles, responsibilities and authorities',
+      '6c.1': 'Actions to address risks and opportunities',
+      '6c.2': 'Information security objectives and planning to achieve them',
+      '6c.3': 'Planning of changes',
+      '7c.1': 'Resources',
+      '7c.2': 'Competence',
+      '7c.3': 'Awareness',
+      '7c.4': 'Communication',
+      '7c.5': 'Documented information',
+      '8c.1': 'Operational planning and control',
+      '8c.2': 'Information security risk assessment',
+      '8c.3': 'Information security risk treatment',
+      '9.1': 'Monitoring, measurement, analysis and evaluation',
+      '9.2': 'Internal audit',
+      '9.3': 'Management review',
+      '10.1': 'Continual improvement',
+      '10.2': 'Nonconformity and corrective action'
+    };
+
+    function generateISO27001Clauses(prefix) {
+      const clauseMap = {
+        '4': ['4.1', '4.2', '4.3', '4.4'],
+        '5c': ['5c.1', '5c.2', '5c.3'],
+        '6c': ['6c.1', '6c.2', '6c.3'],
+        '7c': ['7c.1', '7c.2', '7c.3', '7c.4', '7c.5'],
+        '8c': ['8c.1', '8c.2', '8c.3'],
+        '9': ['9.1', '9.2', '9.3'],
+        '10': ['10.1', '10.2']
+      };
+      const ids = clauseMap[prefix] || [];
+      return ids.map(id => ({
+        id,
+        name: ISO27001_CLAUSES[id] || `Clause ${id}`,
+        description: `ISO 27001:2022 Clause ${id} requirement`
+      }));
+    }
+
+    function generateISO27001Controls(prefix, count) {
+      const controls = [];
+      for (let i = 1; i <= count; i++) {
+        const id = `${prefix}.${i}`;
+        controls.push({ id, name: ISO27001_CONTROLS[id] || `Control ${id}`, description: `ISO 27001:2022 Annex A control ${id}` });
+      }
+      return controls;
+    }
+
+    function generateSOC2Controls(prefix, count) {
+      const names = {
+        'CC1.1': 'Demonstrates commitment to integrity and ethical values', 'CC1.2': 'Exercises oversight responsibility',
+        'CC1.3': 'Establishes structure, authority, and responsibility', 'CC1.4': 'Demonstrates commitment to competence',
+        'CC1.5': 'Enforces accountability', 'CC2.1': 'Obtains or generates relevant information',
+        'CC2.2': 'Communicates internally', 'CC2.3': 'Communicates externally',
+        'CC3.1': 'Specifies suitable objectives', 'CC3.2': 'Identifies and analyzes risk',
+        'CC3.3': 'Assesses fraud risk', 'CC3.4': 'Identifies and analyzes significant change',
+        'CC4.1': 'Selects and develops ongoing evaluations', 'CC4.2': 'Evaluates and communicates deficiencies',
+        'CC5.1': 'Selects and develops control activities', 'CC5.2': 'Selects and develops general controls over technology',
+        'CC5.3': 'Deploys through policies and procedures',
+        'CC6.1': 'Logical access security software', 'CC6.2': 'Registers and authorizes new users',
+        'CC6.3': 'Removes access when no longer required', 'CC6.4': 'Reviews access rights',
+        'CC6.5': 'Physical access restrictions', 'CC6.6': 'Logical access by authorized external parties',
+        'CC6.7': 'Transmission integrity', 'CC6.8': 'Prevents unauthorized data transmission',
+        'CC7.1': 'Detects and monitors security events', 'CC7.2': 'Monitors for anomalies',
+        'CC7.3': 'Evaluates security events', 'CC7.4': 'Responds to security incidents',
+        'CC7.5': 'Recovers from incidents', 'CC8.1': 'Manages infrastructure and software changes',
+        'CC9.1': 'Identifies and manages risk from third parties', 'CC9.2': 'Risk mitigation through business continuity'
+      };
+      const controls = [];
+      for (let i = 1; i <= count; i++) {
+        const id = `${prefix}.${i}`;
+        controls.push({ id, name: names[id] || `Control ${id}`, description: `SOC 2 Trust Services Criteria ${id}` });
+      }
+      return controls;
+    }
+
+    function generateNISTControls(prefix, count) {
+      const names = {
+        'GV.1': 'Organizational Context', 'GV.2': 'Risk Management Strategy', 'GV.3': 'Roles, Responsibilities & Authorities',
+        'GV.4': 'Policy', 'GV.5': 'Oversight', 'GV.6': 'Cybersecurity Supply Chain Risk Management',
+        'ID.1': 'Asset Management', 'ID.2': 'Risk Assessment', 'ID.3': 'Improvement',
+        'ID.4': 'Business Environment', 'ID.5': 'Governance', 'ID.6': 'Risk Management Strategy',
+        'PR.1': 'Identity Management & Access Control', 'PR.2': 'Awareness and Training', 'PR.3': 'Data Security',
+        'PR.4': 'Platform Security', 'PR.5': 'Technology Infrastructure Resilience',
+        'DE.1': 'Continuous Monitoring', 'DE.2': 'Adverse Event Analysis', 'DE.3': 'Security Continuous Monitoring', 'DE.4': 'Detection Processes',
+        'RS.1': 'Incident Management', 'RS.2': 'Incident Analysis', 'RS.3': 'Incident Response Reporting', 'RS.4': 'Incident Mitigation',
+        'RC.1': 'Incident Recovery Plan Execution', 'RC.2': 'Incident Recovery Communication', 'RC.3': 'Improvements'
+      };
+      const controls = [];
+      for (let i = 1; i <= count; i++) {
+        const id = `${prefix}.${i}`;
+        controls.push({ id, name: names[id] || `${prefix} Control ${i}`, description: `NIST CSF 2.0 ${id}` });
+      }
+      return controls;
+    }
+
+    function generateHIPAAControls(domain, count) {
+      const names = {
+        'admin.1': 'Security Management Process', 'admin.2': 'Assigned Security Responsibility',
+        'admin.3': 'Workforce Security', 'admin.4': 'Information Access Management',
+        'admin.5': 'Security Awareness and Training', 'admin.6': 'Security Incident Procedures',
+        'admin.7': 'Contingency Plan', 'admin.8': 'Evaluation', 'admin.9': 'Business Associate Contracts',
+        'physical.1': 'Facility Access Controls', 'physical.2': 'Workstation Use',
+        'physical.3': 'Workstation Security', 'physical.4': 'Device and Media Controls',
+        'technical.1': 'Access Control', 'technical.2': 'Audit Controls',
+        'technical.3': 'Integrity', 'technical.4': 'Person or Entity Authentication', 'technical.5': 'Transmission Security'
+      };
+      const controls = [];
+      for (let i = 1; i <= count; i++) {
+        const id = `${domain}.${i}`;
+        controls.push({ id, name: names[id] || `HIPAA Control ${i}`, description: `HIPAA Security Rule ${domain} safeguard` });
+      }
+      return controls;
+    }
+
+    function generatePCIControls(prefix, count) {
+      const controls = [];
+      for (let i = 1; i <= count; i++) {
+        controls.push({ id: `${prefix}.${i}`, name: `PCI DSS Requirement ${prefix}.${i}`, description: `PCI DSS 4.0 Requirement ${prefix}.${i}` });
+      }
+      return controls;
+    }
+
+    function generateGDPRControls(domain, count) {
+      const names = {
+        'principles.1': 'Lawfulness, fairness and transparency', 'principles.2': 'Purpose limitation',
+        'principles.3': 'Data minimisation', 'principles.4': 'Accuracy', 'principles.5': 'Storage limitation',
+        'principles.6': 'Integrity and confidentiality', 'principles.7': 'Accountability',
+        'rights.1': 'Right to be informed', 'rights.2': 'Right of access', 'rights.3': 'Right to rectification',
+        'rights.4': 'Right to erasure', 'rights.5': 'Right to restrict processing',
+        'rights.6': 'Right to data portability', 'rights.7': 'Right to object', 'rights.8': 'Automated decision-making rights',
+        'controller.1': 'Data protection by design', 'controller.2': 'Data protection by default',
+        'controller.3': 'Records of processing', 'controller.4': 'Data protection officer',
+        'controller.5': 'Data protection impact assessment', 'controller.6': 'Prior consultation', 'controller.7': 'Processor requirements',
+        'security.1': 'Security of processing', 'security.2': 'Breach notification to authority', 'security.3': 'Breach notification to data subjects'
+      };
+      const controls = [];
+      for (let i = 1; i <= count; i++) {
+        const id = `${domain}.${i}`;
+        controls.push({ id, name: names[id] || `GDPR Article ${i}`, description: `GDPR compliance requirement` });
+      }
+      return controls;
+    }
+
+    function generateCMMCControls(prefix, count) {
+      const controls = [];
+      for (let i = 1; i <= count; i++) {
+        controls.push({ id: `${prefix}.${i}`, name: `CMMC ${prefix}.${i}`, description: `CMMC Level 2 practice ${prefix}.${i}` });
+      }
+      return controls;
+    }
+
+    function generateNIST171Controls(prefix, count) {
+      const controls = [];
+      for (let i = 1; i <= count; i++) {
+        controls.push({ id: `${prefix}.${i}`, name: `NIST 800-171 ${prefix}.${i}`, description: `NIST SP 800-171 requirement for protecting CUI` });
+      }
+      return controls;
+    }
+
+    // Maturity Levels
+
+    // =========================================================================
+    // FRAMEWORK DEFINITIONS
+    // =========================================================================
+    const FRAMEWORKS = {
+      iso27001: {
+        name: 'ISO 27001:2022',
+        shortName: 'ISO 27001',
+        icon: 'fa-shield-halved',
+        color: '#3b82f6',
+        description: 'Information Security Management System',
+        domains: [
+          { id: 'clause4', name: 'Clause 4: Context of the Organization', prefix: '4', controls: generateISO27001Clauses('4') },
+          { id: 'clause5', name: 'Clause 5: Leadership', prefix: '5c', controls: generateISO27001Clauses('5c') },
+          { id: 'clause6', name: 'Clause 6: Planning', prefix: '6c', controls: generateISO27001Clauses('6c') },
+          { id: 'clause7', name: 'Clause 7: Support', prefix: '7c', controls: generateISO27001Clauses('7c') },
+          { id: 'clause8', name: 'Clause 8: Operation', prefix: '8c', controls: generateISO27001Clauses('8c') },
+          { id: 'clause9', name: 'Clause 9: Performance Evaluation', prefix: '9', controls: generateISO27001Clauses('9') },
+          { id: 'clause10', name: 'Clause 10: Improvement', prefix: '10', controls: generateISO27001Clauses('10') },
+          { id: 'organizational', name: 'Annex A.5: Organizational Controls', prefix: '5', controls: generateISO27001Controls('5', 37) },
+          { id: 'people', name: 'Annex A.6: People Controls', prefix: '6', controls: generateISO27001Controls('6', 8) },
+          { id: 'physical', name: 'Annex A.7: Physical Controls', prefix: '7', controls: generateISO27001Controls('7', 14) },
+          { id: 'technological', name: 'Annex A.8: Technological Controls', prefix: '8', controls: generateISO27001Controls('8', 34) }
+        ]
+      },
+      soc2: {
+        name: 'SOC 2 Type II',
+        shortName: 'SOC 2',
+        icon: 'fa-certificate',
+        color: '#10b981',
+        description: 'Service Organization Control',
+        domains: [
+          { id: 'cc1', name: 'CC1: Control Environment', prefix: 'CC1', controls: generateSOC2Controls('CC1', 5) },
+          { id: 'cc2', name: 'CC2: Communication & Info', prefix: 'CC2', controls: generateSOC2Controls('CC2', 3) },
+          { id: 'cc3', name: 'CC3: Risk Assessment', prefix: 'CC3', controls: generateSOC2Controls('CC3', 4) },
+          { id: 'cc4', name: 'CC4: Monitoring Activities', prefix: 'CC4', controls: generateSOC2Controls('CC4', 2) },
+          { id: 'cc5', name: 'CC5: Control Activities', prefix: 'CC5', controls: generateSOC2Controls('CC5', 3) },
+          { id: 'cc6', name: 'CC6: Logical & Physical Access', prefix: 'CC6', controls: generateSOC2Controls('CC6', 8) },
+          { id: 'cc7', name: 'CC7: System Operations', prefix: 'CC7', controls: generateSOC2Controls('CC7', 5) },
+          { id: 'cc8', name: 'CC8: Change Management', prefix: 'CC8', controls: generateSOC2Controls('CC8', 1) },
+          { id: 'cc9', name: 'CC9: Risk Mitigation', prefix: 'CC9', controls: generateSOC2Controls('CC9', 2) }
+        ]
+      },
+      nist: {
+        name: 'NIST CSF 2.0',
+        shortName: 'NIST CSF',
+        icon: 'fa-landmark',
+        color: '#8b5cf6',
+        description: 'Cybersecurity Framework',
+        domains: [
+          { id: 'govern', name: 'Govern (GV)', prefix: 'GV', controls: generateNISTControls('GV', 6) },
+          { id: 'identify', name: 'Identify (ID)', prefix: 'ID', controls: generateNISTControls('ID', 6) },
+          { id: 'protect', name: 'Protect (PR)', prefix: 'PR', controls: generateNISTControls('PR', 5) },
+          { id: 'detect', name: 'Detect (DE)', prefix: 'DE', controls: generateNISTControls('DE', 4) },
+          { id: 'respond', name: 'Respond (RS)', prefix: 'RS', controls: generateNISTControls('RS', 4) },
+          { id: 'recover', name: 'Recover (RC)', prefix: 'RC', controls: generateNISTControls('RC', 3) }
+        ]
+      },
+      hipaa: {
+        name: 'HIPAA Security Rule',
+        shortName: 'HIPAA',
+        icon: 'fa-hospital',
+        color: '#ef4444',
+        description: 'Health Insurance Portability',
+        domains: [
+          { id: 'admin', name: 'Administrative Safeguards', prefix: '164.308', controls: generateHIPAAControls('admin', 9) },
+          { id: 'physical', name: 'Physical Safeguards', prefix: '164.310', controls: generateHIPAAControls('physical', 4) },
+          { id: 'technical', name: 'Technical Safeguards', prefix: '164.312', controls: generateHIPAAControls('technical', 5) }
+        ]
+      },
+      pci: {
+        name: 'PCI DSS 4.0',
+        shortName: 'PCI DSS',
+        icon: 'fa-credit-card',
+        color: '#f59e0b',
+        description: 'Payment Card Industry Standard',
+        domains: [
+          { id: 'req1', name: 'Req 1-2: Network Security', prefix: '1', controls: generatePCIControls('1', 8) },
+          { id: 'req3', name: 'Req 3-4: Data Protection', prefix: '3', controls: generatePCIControls('3', 8) },
+          { id: 'req5', name: 'Req 5-6: Vulnerability Mgmt', prefix: '5', controls: generatePCIControls('5', 8) },
+          { id: 'req7', name: 'Req 7-8-9: Access Control', prefix: '7', controls: generatePCIControls('7', 12) },
+          { id: 'req10', name: 'Req 10-11: Monitoring & Testing', prefix: '10', controls: generatePCIControls('10', 10) },
+          { id: 'req12', name: 'Req 12: Security Policies', prefix: '12', controls: generatePCIControls('12', 10) }
+        ]
+      },
+      gdpr: {
+        name: 'GDPR',
+        shortName: 'GDPR',
+        icon: 'fa-user-shield',
+        color: '#06b6d4',
+        description: 'General Data Protection Regulation',
+        domains: [
+          { id: 'principles', name: 'Data Processing Principles', prefix: 'Art.5', controls: generateGDPRControls('principles', 7) },
+          { id: 'rights', name: 'Data Subject Rights', prefix: 'Art.12', controls: generateGDPRControls('rights', 8) },
+          { id: 'controller', name: 'Controller Obligations', prefix: 'Art.24', controls: generateGDPRControls('controller', 7) },
+          { id: 'security', name: 'Security & Breach', prefix: 'Art.32', controls: generateGDPRControls('security', 3) }
+        ]
+      },
+      cmmc: {
+        name: 'CMMC Level 2',
+        shortName: 'CMMC',
+        icon: 'fa-shield-virus',
+        color: '#7c3aed',
+        description: 'Cybersecurity Maturity Model',
+        domains: [
+          { id: 'ac', name: 'Access Control (AC)', prefix: 'AC', controls: generateCMMCControls('AC', 22) },
+          { id: 'au', name: 'Audit & Accountability (AU)', prefix: 'AU', controls: generateCMMCControls('AU', 9) },
+          { id: 'cm', name: 'Configuration Management (CM)', prefix: 'CM', controls: generateCMMCControls('CM', 9) },
+          { id: 'ia', name: 'Identification & Auth (IA)', prefix: 'IA', controls: generateCMMCControls('IA', 11) },
+          { id: 'ir', name: 'Incident Response (IR)', prefix: 'IR', controls: generateCMMCControls('IR', 3) },
+          { id: 'sc', name: 'System & Comms (SC)', prefix: 'SC', controls: generateCMMCControls('SC', 16) },
+          { id: 'si', name: 'System Integrity (SI)', prefix: 'SI', controls: generateCMMCControls('SI', 7) }
+        ]
+      },
+      nist800171: {
+        name: 'NIST 800-171',
+        shortName: 'NIST 171',
+        icon: 'fa-flag-usa',
+        color: '#dc2626',
+        description: 'Protecting CUI',
+        domains: [
+          { id: 'ac', name: 'Access Control', prefix: '3.1', controls: generateNIST171Controls('3.1', 22) },
+          { id: 'at', name: 'Awareness & Training', prefix: '3.2', controls: generateNIST171Controls('3.2', 3) },
+          { id: 'au', name: 'Audit & Accountability', prefix: '3.3', controls: generateNIST171Controls('3.3', 9) },
+          { id: 'cm', name: 'Configuration Management', prefix: '3.4', controls: generateNIST171Controls('3.4', 9) },
+          { id: 'ia', name: 'Identification & Auth', prefix: '3.5', controls: generateNIST171Controls('3.5', 11) },
+          { id: 'ir', name: 'Incident Response', prefix: '3.6', controls: generateNIST171Controls('3.6', 3) },
+          { id: 'ma', name: 'Maintenance', prefix: '3.7', controls: generateNIST171Controls('3.7', 6) },
+          { id: 'mp', name: 'Media Protection', prefix: '3.8', controls: generateNIST171Controls('3.8', 9) },
+          { id: 'ps', name: 'Personnel Security', prefix: '3.9', controls: generateNIST171Controls('3.9', 2) },
+          { id: 'pe', name: 'Physical Protection', prefix: '3.10', controls: generateNIST171Controls('3.10', 6) },
+          { id: 'ra', name: 'Risk Assessment', prefix: '3.11', controls: generateNIST171Controls('3.11', 3) },
+          { id: 'ca', name: 'Security Assessment', prefix: '3.12', controls: generateNIST171Controls('3.12', 4) },
+          { id: 'sc', name: 'System & Comms Protection', prefix: '3.13', controls: generateNIST171Controls('3.13', 16) },
+          { id: 'si', name: 'System & Info Integrity', prefix: '3.14', controls: generateNIST171Controls('3.14', 7) }
+        ]
+      }
+    };
+
+    const MATURITY_LEVELS = [
+      { level: 0, label: 'Not Started', short: '0', description: 'Control not implemented' },
+      { level: 1, label: 'Initial', short: '1', description: 'Ad-hoc, reactive processes' },
+      { level: 2, label: 'Developing', short: '2', description: 'Defined but not consistent' },
+      { level: 3, label: 'Defined', short: '3', description: 'Documented and standardized' },
+      { level: 4, label: 'Managed', short: '4', description: 'Monitored and measured' },
+      { level: 5, label: 'Optimized', short: '5', description: 'Continuous improvement' }
+    ];
+
+    // =========================================================================
+    // API HELPERS
+    // =========================================================================
+    async function api(endpoint, options = {}) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+      const response = await fetch(endpoint, { ...options, headers });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    // =========================================================================
+    // AUTH FUNCTIONS
+    // =========================================================================
+    async function handleLogin() {
+      const email = document.getElementById('auth-email')?.value;
+      const password = document.getElementById('auth-password')?.value;
+      if (!email || !password) { state.error = 'Please enter email and password'; render(); return; }
+      try {
+        state.loading = true; render();
+        const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+        state.token = data.token; state.user = data.user; state.isAuthenticated = true; state.error = null;
+        localStorage.setItem('trustelix_token', data.token);
+        await loadCompanies();
+      } catch (e) { state.error = e.message; }
+      finally { state.loading = false; render(); }
+    }
+
+    async function handleRegister() {
+      const name = document.getElementById('auth-name')?.value;
+      const email = document.getElementById('auth-email')?.value;
+      const password = document.getElementById('auth-password')?.value;
+      if (!name || !email || !password) { state.error = 'All fields required'; render(); return; }
+      if (password.length < 6) { state.error = 'Password must be at least 6 characters'; render(); return; }
+      try {
+        state.loading = true; render();
+        const data = await api('/api/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password }) });
+        state.token = data.token; state.user = data.user; state.isAuthenticated = true; state.error = null;
+        localStorage.setItem('trustelix_token', data.token);
+        await loadCompanies();
+      } catch (e) { state.error = e.message; }
+      finally { state.loading = false; render(); }
+    }
+
+    async function handleForgotPassword() {
+      const email = document.getElementById('forgot-email')?.value;
+      if (!email) { state.error = 'Please enter your email'; render(); return; }
+      try {
+        state.loading = true; render();
+        await api('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+        state.successMessage = 'If an account exists, you will receive a reset link.'; state.error = null;
+      } catch (e) { state.error = e.message; }
+      finally { state.loading = false; render(); }
+    }
+
+    async function handleResetPassword() {
+      const password = document.getElementById('reset-password')?.value;
+      const confirm = document.getElementById('reset-confirm')?.value;
+      if (!password || password.length < 6) { state.error = 'Password must be at least 6 characters'; render(); return; }
+      if (password !== confirm) { state.error = 'Passwords do not match'; render(); return; }
+      try {
+        state.loading = true; render();
+        await api('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token: state.resetToken, password }) });
+        state.successMessage = 'Password reset successful!'; state.authMode = 'login'; state.resetToken = null;
+        window.history.replaceState({}, '', '/');
+      } catch (e) { state.error = e.message; }
+      finally { state.loading = false; render(); }
+    }
+
+    function logout() {
+      state.token = null; state.user = null; state.isAuthenticated = false;
+      state.companies = []; state.selectedCompany = null; state.assessments = {};
+      localStorage.removeItem('trustelix_token'); render();
+    }
+
+    // =========================================================================
+    // DATA LOADING
+    // =========================================================================
+    async function loadCompanies() {
+      try {
+        state.companies = await api('/api/companies');
+        if (state.companies.length > 0 && !state.selectedCompany) {
+          state.selectedCompany = state.companies[0];
+          await loadAssessments();
+        }
+      } catch (e) { console.error('Failed to load companies:', e); }
+    }
+
+    async function loadAssessments() {
+      if (!state.selectedCompany) return;
+      try {
+        state.assessments = await api(`/api/companies/${state.selectedCompany.id}/assessments`);
+        state.analytics = await api(`/api/companies/${state.selectedCompany.id}/analytics`);
+        state.history = await api(`/api/companies/${state.selectedCompany.id}/history?limit=50`);
+      } catch (e) { console.error('Failed to load assessments:', e); }
+    }
+
+    async function selectCompany(company) {
+      state.selectedCompany = company;
+      state.activeTab = 'dashboard';
+      state.selectedFramework = null;
+      await loadAssessments();
+      render();
+    }
+
+    async function createCompany() {
+      const name = document.getElementById('company-name')?.value;
+      const industry = document.getElementById('company-industry')?.value;
+      const size = document.getElementById('company-size')?.value;
+      if (!name) { state.error = 'Company name is required'; render(); return; }
+      try {
+        const company = await api('/api/companies', { method: 'POST', body: JSON.stringify({ name, industry, size }) });
+        state.companies.push(company);
+        state.selectedCompany = company;
+        state.showAddCompanyForm = false;
+        await loadAssessments();
+        render();
+      } catch (e) { state.error = e.message; render(); }
+    }
+
+    // =========================================================================
+    // ASSESSMENT FUNCTIONS
+    // =========================================================================
+    async function saveAssessment(frameworkId, controlId, level) {
+      if (!state.selectedCompany) { console.error('No company selected'); return; }
+      try {
+        // Save scroll position before re-render
+        const mainContent = document.querySelector('main');
+        const scrollTop = mainContent ? mainContent.scrollTop : window.scrollY;
+        
+        await api(`/api/companies/${state.selectedCompany.id}/assessments`, {
+          method: 'POST',
+          body: JSON.stringify({ framework: frameworkId, controlId, level })
+        });
+        await loadAssessments();
+        render();
+        
+        // Restore scroll position after re-render
+        requestAnimationFrame(() => {
+          if (mainContent) {
+            document.querySelector('main').scrollTop = scrollTop;
+          } else {
+            window.scrollTo(0, scrollTop);
+          }
+        });
+      } catch (e) {
+        state.error = 'Failed to save: ' + e.message;
+        render();
+      }
+    }
+
+    function getAssessmentLevel(frameworkId, controlId) {
+      const key = `${frameworkId}:${controlId}`;
+      return state.assessments[key]?.level ?? null;
+    }
+
+    function calculateFrameworkStats(frameworkId) {
+      const framework = FRAMEWORKS[frameworkId];
+      if (!framework) return { total: 0, assessed: 0, passing: 0, percentage: 0, clauses: 0, controls: 0, clausesPassing: 0, controlsPassing: 0 };
+      let total = 0, assessed = 0, passing = 0;
+      let clauses = 0, controls = 0, clausesPassing = 0, controlsPassing = 0;
+      
+      framework.domains.forEach(domain => {
+        // Identify if this is a clause domain (for ISO 27001)
+        const isClauseDomain = domain.id?.startsWith('clause') || domain.name?.includes('Clause ');
+        
+        domain.controls.forEach(control => {
+          total++;
+          const level = getAssessmentLevel(frameworkId, control.id);
+          const isPassing = level !== null && level >= 3;
+          
+          if (level !== null) assessed++;
+          if (isPassing) passing++;
+          
+          // Count clauses vs controls separately
+          if (isClauseDomain) {
+            clauses++;
+            if (isPassing) clausesPassing++;
+          } else {
+            controls++;
+            if (isPassing) controlsPassing++;
+          }
+        });
+      });
+      
+      return { 
+        total, assessed, passing, 
+        percentage: total > 0 ? Math.round((passing / total) * 100) : 0,
+        clauses, controls, clausesPassing, controlsPassing
+      };
+    }
+
+    // Get framework display text (e.g., "23 clauses + 93 controls = 116 total" or just "110 controls")
+    function getFrameworkCountText(frameworkId) {
+      const stats = calculateFrameworkStats(frameworkId);
+      if (stats.clauses > 0 && stats.controls > 0) {
+        return `${stats.clauses} clauses + ${stats.controls} controls = ${stats.total} total`;
+      }
+      return `${stats.total} controls`;
+    }
+
+    // Get short framework count text for cards
+    function getShortCountText(stats) {
+      if (stats.clauses > 0 && stats.controls > 0) {
+        return `${stats.clauses} clauses • ${stats.controls} controls`;
+      }
+      return `${stats.total} controls`;
+    }
+
+    function calculateOverallStats() {
+      let totalControls = 0, totalAssessed = 0, totalPassing = 0;
+      Object.keys(FRAMEWORKS).forEach(fwId => {
+        const stats = calculateFrameworkStats(fwId);
+        totalControls += stats.total; totalAssessed += stats.assessed; totalPassing += stats.passing;
+      });
+      return {
+        totalControls, totalAssessed, totalPassing,
+        overallPercentage: totalControls > 0 ? Math.round((totalPassing / totalControls) * 100) : 0
+      };
+    }
+
+    function calculateDomainStats(frameworkId, domain) {
+      let total = domain.controls.length, passing = 0;
+      domain.controls.forEach(control => {
+        const level = getAssessmentLevel(frameworkId, control.id);
+        if (level !== null && level >= 3) passing++;
+      });
+      return { total, passing, percentage: total > 0 ? Math.round((passing / total) * 100) : 0 };
+    }
+
+    // =========================================================================
+    // RENDER MAIN
+    // =========================================================================
+    function render() {
+      const app = document.getElementById('app');
+      if (!state.isAuthenticated) { app.innerHTML = renderAuthScreen(); }
+      else if (!state.selectedCompany && state.companies.length === 0) { app.innerHTML = renderOnboarding(); }
+      else { app.innerHTML = renderMainApp(); }
+    }
+
+    function renderAuthScreen() {
+      return `
+        <div class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+          <div class="w-full max-w-md">
+            <div class="text-center mb-8">
+              <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
+                <i class="fas fa-shield-halved text-3xl text-white"></i>
+              </div>
+              <h1 class="text-3xl font-bold text-white">TrustElix</h1>
+              <p class="text-blue-200 mt-2">Enterprise Compliance Platform</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-2xl p-8">
+              ${state.error ? `<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">${state.error}</div>` : ''}
+              ${state.successMessage ? `<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">${state.successMessage}</div>` : ''}
+              ${state.authMode === 'reset' && state.resetToken ? renderResetForm() : ''}
+              ${state.authMode === 'forgot' ? renderForgotForm() : ''}
+              ${(state.authMode === 'login' || state.authMode === 'register') ? renderLoginForm() : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLoginForm() {
+      return `
+        <div class="space-y-3 mb-6">
+          <a href="/auth/google" class="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-medium text-gray-700">
+            <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </a>
+        </div>
+        <div class="relative my-6"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div><div class="relative flex justify-center text-sm"><span class="px-4 bg-white text-gray-500">or</span></div></div>
+        <div class="flex mb-6 bg-gray-100 rounded-lg p-1">
+          <button onclick="state.authMode = 'login'; state.error = null; render();" class="flex-1 py-2.5 text-sm font-medium rounded-md transition ${state.authMode === 'login' ? 'bg-white shadow text-gray-900' : 'text-gray-600'}">Sign In</button>
+          <button onclick="state.authMode = 'register'; state.error = null; render();" class="flex-1 py-2.5 text-sm font-medium rounded-md transition ${state.authMode === 'register' ? 'bg-white shadow text-gray-900' : 'text-gray-600'}">Sign Up</button>
+        </div>
+        <div class="space-y-4">
+          ${state.authMode === 'register' ? `<div><label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label><input type="text" id="auth-name" placeholder="John Doe" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"></div>` : ''}
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Email or Username</label><input type="text" id="auth-email" placeholder="you@company.com" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"></div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Password</label><input type="password" id="auth-password" placeholder="••••••••" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500" onkeypress="if(event.key==='Enter') ${state.authMode === 'login' ? 'handleLogin()' : 'handleRegister()'}"></div>
+        </div>
+        <button onclick="${state.authMode === 'login' ? 'handleLogin()' : 'handleRegister()'}" class="w-full mt-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition" ${state.loading ? 'disabled' : ''}>${state.loading ? '<i class="fas fa-spinner fa-spin"></i>' : (state.authMode === 'login' ? 'Sign In' : 'Create Account')}</button>
+        ${state.authMode === 'login' ? `<button onclick="state.authMode = 'forgot'; state.error = null; render();" class="w-full mt-4 text-sm text-blue-600 hover:text-blue-700">Forgot password?</button>` : ''}
+      `;
+    }
+
+    function renderForgotForm() {
+      return `
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">Reset Password</h2>
+        <p class="text-gray-600 text-sm mb-6">Enter your email to receive a reset link.</p>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="forgot-email" placeholder="you@company.com" class="w-full px-4 py-3 border border-gray-200 rounded-lg"></div>
+        <button onclick="handleForgotPassword()" class="w-full mt-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Send Reset Link</button>
+        <button onclick="state.authMode = 'login'; state.error = null; state.successMessage = null; render();" class="w-full mt-4 text-sm text-gray-600">← Back to Sign In</button>
+      `;
+    }
+
+    function renderResetForm() {
+      return `
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">Set New Password</h2>
+        <div class="space-y-4">
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">New Password</label><input type="password" id="reset-password" placeholder="••••••••" class="w-full px-4 py-3 border border-gray-200 rounded-lg"></div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label><input type="password" id="reset-confirm" placeholder="••••••••" class="w-full px-4 py-3 border border-gray-200 rounded-lg"></div>
+        </div>
+        <button onclick="handleResetPassword()" class="w-full mt-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Reset Password</button>
+      `;
+    }
+
+    function renderOnboarding() {
+      return `
+        <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div class="w-full max-w-lg">
+            <div class="text-center mb-8">
+              <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4"><i class="fas fa-building text-3xl text-white"></i></div>
+              <h1 class="text-2xl font-bold text-gray-900">Welcome to TrustElix</h1>
+              <p class="text-gray-600 mt-2">Create your first organization</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+              ${state.error ? `<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">${state.error}</div>` : ''}
+              <div class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Organization Name *</label><input type="text" id="company-name" placeholder="Acme Corporation" class="w-full px-4 py-3 border border-gray-200 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Industry</label><select id="company-industry" class="w-full px-4 py-3 border border-gray-200 rounded-lg"><option value="">Select</option><option>Technology</option><option>Healthcare</option><option>Finance</option><option>Manufacturing</option><option>Government</option><option>Other</option></select></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Size</label><select id="company-size" class="w-full px-4 py-3 border border-gray-200 rounded-lg"><option value="">Select</option><option>1-50</option><option>51-200</option><option>201-1000</option><option>1000+</option></select></div>
+              </div>
+              <button onclick="createCompany()" class="w-full mt-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Create Organization</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMainApp() {
+      return `
+        <div class="flex h-screen overflow-hidden">
+          ${renderSidebar()}
+          <main class="flex-1 overflow-auto bg-gray-50">
+            ${renderHeader()}
+            <div class="p-6">${renderContent()}</div>
+          </main>
+        </div>
+        ${state.slidePanel ? renderSlidePanel() : ''}
+        ${renderToasts()}
+        ${renderConfirmDialog()}
+      `;
+    }
+
+    function renderSlidePanel() {
+      const panels = {
+        'feedback': renderFeedbackPanel,
+        'framework-select': renderFrameworkSelectPanel,
+        'saved-reports': renderSavedReportsPanel,
+        'create-user': renderCreateUserPanel
+      };
+      const renderFn = panels[state.slidePanel];
+      if (!renderFn) return '';
+      
+      return `
+        <div class="slide-panel-overlay" onclick="closeSlidePanel()"></div>
+        ${renderFn()}
+      `;
+    }
+
+    function closeSlidePanel() {
+      state.slidePanel = null;
+      state.aiSelectedFramework = null;
+      state.aiSelectedFrameworks = [];
+      render();
+    }
+
+    function renderFeedbackPanel() {
+      return `
+        <div class="slide-panel">
+          <div class="slide-panel-header">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">Send Feedback</h2>
+              <p class="text-sm text-gray-500 mt-1">Help us improve TrustElix</p>
+            </div>
+            <button onclick="closeSlidePanel()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+              <i class="fas fa-times text-gray-400"></i>
+            </button>
+          </div>
+          <div class="slide-panel-body">
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-3">How would you rate your experience?</label>
+              <div class="flex gap-2">
+                ${[1,2,3,4,5].map(n => `
+                  <button onclick="state.feedbackRating = ${n}; render();" class="w-12 h-12 rounded-xl text-2xl transition ${state.feedbackRating >= n ? 'bg-yellow-100 text-yellow-500' : 'bg-gray-100 text-gray-300 hover:bg-gray-200'}">★</button>
+                `).join('')}
+              </div>
+            </div>
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-3">What type of feedback?</label>
+              <div class="grid grid-cols-3 gap-3">
+                ${['feedback', 'bug', 'enhancement'].map(t => `
+                  <button onclick="state.feedbackType = '${t}'; render();" class="p-3 rounded-xl border-2 transition text-center ${state.feedbackType === t ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}">
+                    <i class="fas ${t === 'bug' ? 'fa-bug text-red-500' : t === 'enhancement' ? 'fa-lightbulb text-amber-500' : 'fa-comment text-blue-500'} text-lg mb-1"></i>
+                    <div class="text-sm font-medium capitalize">${t}</div>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Your message</label>
+              <textarea id="feedback-message" rows="5" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" placeholder="Tell us what's on your mind..."></textarea>
+            </div>
+          </div>
+          <div class="slide-panel-footer flex gap-3">
+            <button onclick="closeSlidePanel()" class="flex-1 px-4 py-3 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition">Cancel</button>
+            <button onclick="submitFeedback()" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition">Submit Feedback</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFrameworkSelectPanel() {
+      const titles = {
+        roadmap: 'Implementation Roadmap',
+        policy: 'Policy Generator',
+        audit: 'Audit Readiness',
+        gap: 'Gap Analysis'
+      };
+      
+      return `
+        <div class="slide-panel slide-panel-wide">
+          <div class="slide-panel-header">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">${titles[state.aiAnalysisType] || 'Select Framework'}</h2>
+              <p class="text-sm text-gray-500 mt-1">Select one, multiple, or all frameworks</p>
+            </div>
+            <button onclick="closeSlidePanel()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+              <i class="fas fa-times text-gray-400"></i>
+            </button>
+          </div>
+          <div class="slide-panel-body">
+            <div class="mb-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl">
+              <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="selectAllFrameworks()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                  <i class="fas fa-check-double mr-2"></i>All Frameworks
+                </button>
+                <button onclick="state.aiSelectedFrameworks = []; render();" class="px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                  Clear
+                </button>
+                <span class="text-sm text-gray-600 ml-auto font-medium">${state.aiSelectedFrameworks.length} of ${Object.keys(FRAMEWORKS).length} selected</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 gap-3">
+              ${Object.entries(FRAMEWORKS).map(([id, fw]) => {
+                const stats = calculateFrameworkStats(id);
+                const isSelected = state.aiSelectedFrameworks.includes(id);
+                return `
+                  <div onclick="toggleFrameworkSelection('${id}')" 
+                       class="framework-chip ${isSelected ? 'selected' : ''}">
+                    <i class="fas ${fw.icon} text-xl" style="color: ${fw.color}"></i>
+                    <div class="flex-1">
+                      <div class="font-medium text-gray-900">${fw.name}</div>
+                      <div class="text-sm text-gray-500">${stats.percentage}% ready • ${getShortCountText(stats)} • ${stats.passing} passing</div>
+                    </div>
+                    <div class="chip-check"><i class="fas fa-check"></i></div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+          <div class="slide-panel-footer flex gap-3">
+            <button onclick="closeSlidePanel()" class="flex-1 px-4 py-3 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition">Cancel</button>
+            <button onclick="runSelectedAnalysis()" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition ${state.aiSelectedFrameworks.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${state.aiSelectedFrameworks.length === 0 ? 'disabled' : ''}>
+              <i class="fas fa-wand-magic-sparkles mr-2"></i>Generate Report
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSavedReportsPanel() {
+      return `
+        <div class="slide-panel slide-panel-wide">
+          <div class="slide-panel-header">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">Saved Reports</h2>
+              <p class="text-sm text-gray-500 mt-1">${state.savedReports.length} reports saved</p>
+            </div>
+            <button onclick="closeSlidePanel()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+              <i class="fas fa-times text-gray-400"></i>
+            </button>
+          </div>
+          <div class="slide-panel-body">
+            ${state.savedReports.length === 0 ? `
+              <div class="text-center py-12">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i class="fas fa-folder-open text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="font-medium text-gray-900 mb-1">No saved reports</h3>
+                <p class="text-sm text-gray-500">Generated reports will appear here when you save them</p>
+              </div>
+            ` : `
+              <div class="space-y-3">
+                ${state.savedReports.map((report, idx) => `
+                  <div class="p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-sm transition group">
+                    <div class="flex items-start gap-4">
+                      <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-file-lines text-blue-600"></i>
+                      </div>
+                      <div class="flex-1 min-w-0 cursor-pointer" onclick="loadSavedReport(${idx}); closeSlidePanel();">
+                        <h4 class="font-medium text-gray-900 truncate">${report.title}</h4>
+                        <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                          <span>${report.company}</span>
+                          ${report.framework ? `<span>•</span><span>${report.framework}</span>` : ''}
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">${report.timestamp}</div>
+                      </div>
+                      <button onclick="deleteSavedReport(${idx})" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition opacity-0 group-hover:opacity-100">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCreateUserPanel() {
+      return `
+        <div class="slide-panel">
+          <div class="slide-panel-header">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">Create New User</h2>
+              <p class="text-sm text-gray-500 mt-1">Add a new user to the platform</p>
+            </div>
+            <button onclick="closeSlidePanel()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+              <i class="fas fa-times text-gray-400"></i>
+            </button>
+          </div>
+          <div class="slide-panel-body space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+              <input type="text" id="create-user-name" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="John Doe">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+              <input type="text" id="create-user-username" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="johndoe">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <input type="email" id="create-user-email" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="john@example.com">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <input type="password" id="create-user-password" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+              <select id="create-user-role" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="slide-panel-footer flex gap-3">
+            <button onclick="closeSlidePanel()" class="flex-1 px-4 py-3 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition">Cancel</button>
+            <button onclick="createUserFromPanel()" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition">
+              <i class="fas fa-user-plus mr-2"></i>Create User
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleFrameworkSelection(id) {
+      const idx = state.aiSelectedFrameworks.indexOf(id);
+      if (idx > -1) {
+        state.aiSelectedFrameworks.splice(idx, 1);
+      } else {
+        state.aiSelectedFrameworks.push(id);
+      }
+      render();
+    }
+
+    function selectAllFrameworks() {
+      state.aiSelectedFrameworks = Object.keys(FRAMEWORKS);
+      render();
+    }
+
+    function selectSingleFramework(id) {
+      // Not used anymore - all reports use multi-select
+      state.aiSelectedFrameworks = [id];
+      runSelectedAnalysis();
+    }
+
+    function runSelectedAnalysis() {
+      closeSlidePanel();
+      // Pass the selected frameworks - works for all report types now
+      const frameworkId = state.aiSelectedFrameworks.length === 1 ? state.aiSelectedFrameworks[0] : null;
+      runAIAnalysis(state.aiAnalysisType, frameworkId);
+    }
+
+    async function createUserFromPanel() {
+      const name = document.getElementById('create-user-name')?.value;
+      const username = document.getElementById('create-user-username')?.value;
+      const email = document.getElementById('create-user-email')?.value;
+      const password = document.getElementById('create-user-password')?.value;
+      const role = document.getElementById('create-user-role')?.value || 'user';
+      
+      if (!name || !email || !password) {
+        showToast('warning', 'Missing Fields', 'Please fill in all required fields');
+        return;
+      }
+      
+      try {
+        await api('/api/admin/users', { method: 'POST', body: JSON.stringify({ name, username, email, password, role }) });
+        closeSlidePanel();
+        loadAdminData();
+        showToast('success', 'User Created', `${name} has been added successfully`);
+      } catch (e) {
+        showToast('error', 'Failed', e.message);
+      }
+    }
+
+    function renderSidebar() {
+      const navItems = [
+        { id: 'dashboard', icon: 'fa-grid-2', label: 'Dashboard' },
+        { id: 'frameworks', icon: 'fa-layer-group', label: 'Frameworks' },
+        { id: 'assessment', icon: 'fa-clipboard-check', label: 'Assessment' },
+        { id: 'reports', icon: 'fa-file-lines', label: 'Reports' },
+        { id: 'ai', icon: 'fa-wand-magic-sparkles', label: 'AI Analysis' },
+        { id: 'history', icon: 'fa-clock-rotate-left', label: 'History' }
+      ];
+      if (state.user?.role === 'admin') navItems.push({ id: 'admin', icon: 'fa-gear', label: 'Admin' });
+
+      return `
+        <aside class="sidebar ${state.sidebarCollapsed ? 'collapsed' : ''} bg-sidebar h-screen flex flex-col no-print relative">
+          <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0"><i class="fas fa-shield-halved text-white text-lg"></i></div>
+              <div class="logo-text"><div class="text-white font-bold text-lg">TrustElix</div><div class="text-blue-300 text-xs">v4.0</div></div>
+            </div>
+          </div>
+          <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition">
+              <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-building text-blue-400 text-sm"></i></div>
+              <div class="org-name flex-1 min-w-0"><div class="text-white text-sm font-medium truncate">${state.selectedCompany?.name || 'Select'}</div><div class="text-gray-400 text-xs truncate">${state.selectedCompany?.industry || ''}</div></div>
+            </div>
+          </div>
+          <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+            ${navItems.map(item => `
+              <button onclick="switchTab('${item.id}')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left ${state.activeTab === item.id ? 'active text-white' : 'text-gray-400 hover:text-white'}">
+                <i class="fas ${item.icon} w-5 text-center"></i><span class="nav-text text-sm">${item.label}</span>
+              </button>
+            `).join('')}
+          </nav>
+          <div class="p-4 border-t border-white/10">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-white text-sm font-medium">${state.user?.name?.charAt(0) || 'U'}</span></div>
+              <div class="nav-text flex-1 min-w-0"><div class="text-white text-sm font-medium truncate">${state.user?.name || 'User'}</div><div class="text-gray-400 text-xs truncate">${state.user?.email || ''}</div></div>
+              <button onclick="logout()" class="text-gray-400 hover:text-white transition" title="Sign Out"><i class="fas fa-right-from-bracket"></i></button>
+            </div>
+          </div>
+          <button onclick="state.sidebarCollapsed = !state.sidebarCollapsed; render();" class="absolute top-1/2 -right-3 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-600 hover:text-gray-900 transition">
+            <i class="fas ${state.sidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'} text-xs"></i>
+          </button>
+        </aside>
+      `;
+    }
+
+    function renderHeader() {
+      const titles = { dashboard: 'Dashboard', frameworks: 'Frameworks', assessment: state.selectedFramework ? FRAMEWORKS[state.selectedFramework]?.name : 'Assessment', reports: 'Reports', ai: 'AI Analysis', history: 'History', admin: 'Administration' };
+      return `
+        <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between no-print">
+          <div><h1 class="text-xl font-semibold text-gray-900">${titles[state.activeTab] || 'Dashboard'}</h1></div>
+          <div class="flex items-center gap-3">
+            <button onclick="state.slidePanel = 'feedback'; render();" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition flex items-center gap-2"><i class="fas fa-comment-dots"></i>Feedback</button>
+          </div>
+        </header>
+      `;
+    }
+
+    function renderContent() {
+      switch (state.activeTab) {
+        case 'dashboard': return renderDashboard();
+        case 'frameworks': return renderFrameworks();
+        case 'assessment': return renderAssessment();
+        case 'reports': return renderReports();
+        case 'ai': return renderAIAnalysis();
+        case 'history': return renderHistory();
+        case 'admin': return renderAdmin();
+        default: return renderDashboard();
+      }
+    }
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      state.selectedReport = null;
+      state.aiResponse = null;
+      state.error = null;
+      if (tab === 'admin') loadAdminData();
+      render();
+    }
+
+    function toggleDomain(domainId) {
+      const mainContent = document.querySelector('main');
+      const scrollTop = mainContent ? mainContent.scrollTop : window.scrollY;
+      
+      state.expandedDomains[domainId] = !state.expandedDomains[domainId];
+      render();
+      
+      requestAnimationFrame(() => {
+        if (mainContent) {
+          document.querySelector('main').scrollTop = scrollTop;
+        } else {
+          window.scrollTo(0, scrollTop);
+        }
+      });
+    }
+
+    // =========================================================================
+    // DASHBOARD
+    // =========================================================================
+    function renderDashboard() {
+      const overall = calculateOverallStats();
+      return `
+        <div class="animate-fade-in">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            ${renderStatCard('Overall Compliance', `${overall.overallPercentage}%`, 'fa-shield-check', 'text-green-600', 'bg-green-50', `${overall.totalPassing}/${overall.totalControls} passing`)}
+            ${renderStatCard('Controls Assessed', overall.totalAssessed.toString(), 'fa-clipboard-check', 'text-blue-600', 'bg-blue-50', `of ${overall.totalControls} total`)}
+            ${renderStatCard('Frameworks', Object.keys(FRAMEWORKS).length.toString(), 'fa-layer-group', 'text-purple-600', 'bg-purple-50', 'Active')}
+            ${renderStatCard('Recent Changes', (state.history?.length || 0).toString(), 'fa-clock', 'text-amber-600', 'bg-amber-50', 'Last 50')}
+          </div>
+          <div class="card p-6 mb-8">
+            <div class="flex items-center justify-between mb-6"><h2 class="text-lg font-semibold text-gray-900">Framework Readiness</h2><button onclick="switchTab('frameworks')" class="text-sm text-blue-600 hover:text-blue-700 font-medium">View All →</button></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              ${Object.entries(FRAMEWORKS).slice(0, 4).map(([id, fw]) => {
+                const stats = calculateFrameworkStats(id);
+                return `<div class="framework-card card p-4 cursor-pointer" onclick="state.selectedFramework = '${id}'; switchTab('assessment');">
+                  <div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: ${fw.color}20"><i class="fas ${fw.icon}" style="color: ${fw.color}"></i></div><div><div class="font-medium text-gray-900">${fw.shortName}</div><div class="text-xs text-gray-500">${getShortCountText(stats)}</div></div></div>
+                  <div class="flex items-center gap-3">${renderProgressRing(stats.percentage, fw.color, 40)}<div><div class="text-2xl font-bold text-gray-900">${stats.percentage}%</div><div class="text-xs text-gray-500">Ready</div></div></div>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 card p-6">
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
+              <div class="space-y-3">
+                ${(state.history || []).slice(0, 5).map(item => `
+                  <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition">
+                    <div class="w-10 h-10 rounded-full ${item.isPropagated ? 'bg-purple-100' : 'bg-blue-100'} flex items-center justify-center"><i class="fas ${item.isPropagated ? 'fa-sync' : 'fa-check'} ${item.isPropagated ? 'text-purple-600' : 'text-blue-600'} text-sm"></i></div>
+                    <div class="flex-1"><div class="font-medium text-gray-900">${item.controlId || 'Unknown'}</div><div class="text-sm text-gray-500">${item.frameworkId || ''} • Level ${item.level ?? '?'}</div></div>
+                    <div class="text-xs text-gray-400">${formatTimeAgo(item.timestamp)}</div>
+                  </div>
+                `).join('') || '<p class="text-gray-500 text-center py-8">No recent activity</p>'}
+              </div>
+            </div>
+            <div class="card p-6">
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+              <div class="space-y-3">
+                <button onclick="switchTab('frameworks')" class="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition text-left"><div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center"><i class="fas fa-plus text-blue-600"></i></div><div><div class="font-medium text-gray-900">New Assessment</div><div class="text-xs text-gray-500">Start assessing</div></div></button>
+                <button onclick="switchTab('reports')" class="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition text-left"><div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center"><i class="fas fa-file-export text-green-600"></i></div><div><div class="font-medium text-gray-900">Generate Report</div><div class="text-xs text-gray-500">Export status</div></div></button>
+                <button onclick="switchTab('ai')" class="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition text-left"><div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center"><i class="fas fa-wand-magic-sparkles text-purple-600"></i></div><div><div class="font-medium text-gray-900">AI Analysis</div><div class="text-xs text-gray-500">Get insights</div></div></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStatCard(title, value, icon, iconColor, bgColor, subtitle) {
+      return `<div class="card p-6 card-hover transition cursor-pointer"><div class="flex items-center justify-between mb-4"><div class="w-12 h-12 ${bgColor} rounded-xl flex items-center justify-center"><i class="fas ${icon} ${iconColor} text-xl"></i></div></div><div class="text-3xl font-bold text-gray-900">${value}</div><div class="text-sm font-medium text-gray-600 mt-1">${title}</div><div class="text-xs text-gray-400 mt-2">${subtitle}</div></div>`;
+    }
+
+    function renderProgressRing(percentage, color, size = 60) {
+      const radius = (size - 8) / 2, circumference = 2 * Math.PI * radius, offset = circumference - (percentage / 100) * circumference;
+      return `<svg width="${size}" height="${size}" class="progress-ring"><circle cx="${size/2}" cy="${size/2}" r="${radius}" fill="none" stroke="#e5e7eb" stroke-width="4"/><circle cx="${size/2}" cy="${size/2}" r="${radius}" fill="none" stroke="${color}" stroke-width="4" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round" class="progress-ring-circle"/></svg>`;
+    }
+
+    // =========================================================================
+    // FRAMEWORKS
+    // =========================================================================
+    function renderFrameworks() {
+      return `
+        <div class="animate-fade-in">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            ${Object.entries(FRAMEWORKS).map(([id, fw]) => {
+              const stats = calculateFrameworkStats(id);
+              const countDisplay = stats.clauses > 0 
+                ? `<div class="flex justify-between text-sm"><span class="text-gray-500">Clauses</span><span class="font-medium text-gray-900">${stats.clausesPassing}/${stats.clauses}</span></div>
+                   <div class="flex justify-between text-sm mt-1"><span class="text-gray-500">Controls</span><span class="font-medium text-gray-900">${stats.controlsPassing}/${stats.controls}</span></div>
+                   <div class="flex justify-between text-sm mt-1 pt-1 border-t border-gray-100"><span class="text-gray-500">Total</span><span class="font-medium text-green-600">${stats.passing}/${stats.total}</span></div>`
+                : `<div class="flex justify-between text-sm"><span class="text-gray-500">Controls</span><span class="font-medium text-gray-900">${stats.assessed}/${stats.total}</span></div>
+                   <div class="flex justify-between text-sm mt-2"><span class="text-gray-500">Passing</span><span class="font-medium text-green-600">${stats.passing}</span></div>`;
+              return `<div class="framework-card card p-6" onclick="state.selectedFramework = '${id}'; switchTab('assessment');">
+                <div class="flex items-center gap-4 mb-4"><div class="w-14 h-14 rounded-xl flex items-center justify-center" style="background: ${fw.color}15"><i class="fas ${fw.icon} text-2xl" style="color: ${fw.color}"></i></div><div><div class="font-semibold text-gray-900">${fw.shortName}</div><div class="text-sm text-gray-500">${fw.description}</div></div></div>
+                <div class="flex items-center justify-between mb-4"><div><div class="text-3xl font-bold text-gray-900">${stats.percentage}%</div><div class="text-sm text-gray-500">Ready</div></div>${renderProgressRing(stats.percentage, fw.color, 70)}</div>
+                <div class="pt-4 border-t border-gray-100">${countDisplay}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // ASSESSMENT
+    // =========================================================================
+    function renderAssessment() {
+      if (!state.selectedFramework) {
+        return `<div class="animate-fade-in text-center py-16"><div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"><i class="fas fa-layer-group text-3xl text-gray-400"></i></div><h2 class="text-xl font-semibold text-gray-900 mb-2">Select a Framework</h2><p class="text-gray-500 mb-6">Choose a framework to assess</p><div class="flex flex-wrap justify-center gap-3">${Object.entries(FRAMEWORKS).map(([id, fw]) => `<button onclick="state.selectedFramework = '${id}'; render();" class="px-4 py-2 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition flex items-center gap-2"><i class="fas ${fw.icon}" style="color: ${fw.color}"></i>${fw.shortName}</button>`).join('')}</div></div>`;
+      }
+      const framework = FRAMEWORKS[state.selectedFramework];
+      const stats = calculateFrameworkStats(state.selectedFramework);
+      const assessedText = stats.clauses > 0 
+        ? `${stats.clauses} clauses + ${stats.controls} controls`
+        : `${stats.assessed}/${stats.total}`;
+      return `
+        <div class="animate-fade-in">
+          ${state.error ? `<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between"><span>${state.error}</span><button onclick="state.error = null; render();" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button></div>` : ''}
+          <div class="card p-6 mb-6">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-4"><div class="w-14 h-14 rounded-xl flex items-center justify-center" style="background: ${framework.color}15"><i class="fas ${framework.icon} text-2xl" style="color: ${framework.color}"></i></div><div><h2 class="text-xl font-semibold text-gray-900">${framework.name}</h2><p class="text-gray-500">${framework.description}</p></div></div>
+              <div class="flex items-center gap-6"><div class="text-center"><div class="text-3xl font-bold" style="color: ${framework.color}">${stats.percentage}%</div><div class="text-sm text-gray-500">Ready</div></div><div class="text-center"><div class="text-3xl font-bold text-gray-900">${stats.passing}/${stats.total}</div><div class="text-sm text-gray-500">${assessedText}</div></div></div>
+            </div>
+            <div class="flex items-center gap-2 mt-6 pt-4 border-t border-gray-100 flex-wrap"><span class="text-sm text-gray-500 mr-2">Maturity:</span>${MATURITY_LEVELS.map(ml => `<div class="flex items-center gap-1.5" title="${ml.description}"><span class="maturity-radio maturity-${ml.level}">${ml.level}</span><span class="text-xs text-gray-600">${ml.label}</span></div>`).join('')}</div>
+          </div>
+          <div class="card overflow-hidden">
+            ${framework.domains.map(domain => {
+              const isExpanded = state.expandedDomains[domain.id] !== false;
+              const domainStats = calculateDomainStats(state.selectedFramework, domain);
+              return `<div class="border-b border-gray-100 last:border-b-0">
+                <button onclick="toggleDomain('${domain.id}')" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition">
+                  <div class="flex items-center gap-3"><i class="fas fa-chevron-${isExpanded ? 'down' : 'right'} text-gray-400 w-4"></i><span class="font-medium text-gray-900">${domain.name}</span><span class="text-sm text-gray-500">(${domain.controls.length})</span></div>
+                  <div class="flex items-center gap-4"><div class="w-32 h-2 bg-gray-200 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width: ${domainStats.percentage}%; background: ${framework.color}"></div></div><span class="text-sm font-medium text-gray-700 w-12 text-right">${domainStats.percentage}%</span></div>
+                </button>
+                ${isExpanded ? `<div class="bg-gray-50/50">${domain.controls.map(control => {
+                  const level = getAssessmentLevel(state.selectedFramework, control.id);
+                  return `<div class="control-row flex items-center gap-4 px-6 py-3 border-t border-gray-100">
+                    <div class="flex-1 min-w-0"><div class="flex items-center gap-2"><span class="font-mono text-sm text-gray-500">${control.id}</span><span class="text-sm text-gray-900 truncate">${control.name}</span></div></div>
+                    <div class="flex items-center gap-1">${MATURITY_LEVELS.map(ml => `<button onclick="saveAssessment('${state.selectedFramework}', '${control.id}', ${ml.level})" class="maturity-radio maturity-${ml.level} ${level === ml.level ? 'selected' : ''}" title="${ml.label}">${ml.level}</button>`).join('')}</div>
+                  </div>`;
+                }).join('')}</div>` : ''}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // REPORTS - COMPREHENSIVE
+    // =========================================================================
+    function renderReports() {
+      return `
+        <div class="animate-fade-in">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            ${renderReportCard('executive', 'Executive Summary', 'Board-ready compliance overview', 'fa-chart-pie', 'blue')}
+            ${renderReportCard('gap', 'Gap Analysis', 'Control gaps by priority', 'fa-magnifying-glass-chart', 'amber')}
+            ${renderReportCard('roadmap', 'Implementation Roadmap', 'Phased compliance plan', 'fa-road', 'green')}
+            ${renderReportCard('synergy', 'Framework Synergy', 'Cross-framework mapping', 'fa-diagram-project', 'purple')}
+          </div>
+          ${state.selectedReport ? renderReportContent() : ''}
+        </div>
+      `;
+    }
+
+    function renderReportCard(id, title, description, icon, color) {
+      const c = { blue: 'bg-blue-50 text-blue-600 border-blue-200', amber: 'bg-amber-50 text-amber-600 border-amber-200', green: 'bg-green-50 text-green-600 border-green-200', purple: 'bg-purple-50 text-purple-600 border-purple-200' }[color].split(' ');
+      return `<div class="card p-6 card-hover cursor-pointer ${state.selectedReport === id ? 'border-2 ' + c[2] : ''}" onclick="state.selectedReport = '${id}'; render();"><div class="w-12 h-12 ${c[0]} rounded-xl flex items-center justify-center mb-4"><i class="fas ${icon} ${c[1]} text-xl"></i></div><h3 class="font-semibold text-gray-900 mb-2">${title}</h3><p class="text-sm text-gray-500">${description}</p></div>`;
+    }
+
+    function renderReportContent() {
+      const overall = calculateOverallStats();
+      const reports = { executive: generateExecutiveReport(overall), gap: generateGapReport(), roadmap: generateRoadmapReport(), synergy: generateSynergyReport() };
+      const reportTitles = { executive: 'Executive Summary', gap: 'Gap Analysis Report', roadmap: 'Implementation Roadmap', synergy: 'Framework Synergy Analysis' };
+      const currentTitle = reportTitles[state.selectedReport] || 'Report';
+      const timestamp = new Date().toLocaleString();
+      
+      return `
+        <div class="card mt-8" id="report-content">
+          <!-- Report Header -->
+          <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50">
+            <div class="flex items-start justify-between">
+              <div>
+                <h1 class="text-2xl font-bold text-gray-900">${currentTitle}</h1>
+                <div class="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                  <span><i class="fas fa-building mr-1"></i>${state.selectedCompany?.name || 'Company'}</span>
+                  <span><i class="fas fa-calendar mr-1"></i>${timestamp}</span>
+                </div>
+              </div>
+              <div class="flex gap-2 no-print">
+                <button onclick="exportStaticReportToPDF('${state.selectedReport}')" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition flex items-center gap-2" title="Export to PDF">
+                  <i class="fas fa-file-pdf"></i> PDF
+                </button>
+                <button onclick="saveStaticReport('${state.selectedReport}')" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition flex items-center gap-2" title="Save Report">
+                  <i class="fas fa-save"></i> Save
+                </button>
+                <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-2" title="Print">
+                  <i class="fas fa-print"></i> Print
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Report Content -->
+          <div class="p-8">
+            <div class="prose max-w-none">${reports[state.selectedReport] || ''}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function exportStaticReportToPDF(reportType) {
+      const printContent = document.getElementById('report-content');
+      if (!printContent) { window.print(); return; }
+      
+      const reportTitles = { executive: 'Executive Summary', gap: 'Gap Analysis Report', roadmap: 'Implementation Roadmap', synergy: 'Framework Synergy Analysis' };
+      const title = reportTitles[reportType] || 'Report';
+      
+      const originalContents = document.body.innerHTML;
+      const printContents = printContent.innerHTML;
+      
+      document.body.innerHTML = `
+        <html>
+          <head>
+            <title>${title} - ${state.selectedCompany?.name || 'Company'}</title>
+            <style>
+              body { font-family: 'Inter', Arial, sans-serif; padding: 40px; line-height: 1.6; }
+              h1 { font-size: 24px; color: #1e3a8a; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+              h2 { font-size: 18px; color: #1e40af; margin-top: 24px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+              table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+              th { background: #1e3a8a; color: white; padding: 10px; text-align: left; }
+              td { padding: 10px; border: 1px solid #ddd; }
+              tr:nth-child(even) { background: #f9fafb; }
+              .no-print { display: none !important; }
+              .grid { display: flex; flex-wrap: wrap; gap: 16px; }
+              .grid > div { flex: 1; min-width: 150px; }
+            </style>
+          </head>
+          <body>${printContents}</body>
+        </html>
+      `;
+      
+      window.print();
+      document.body.innerHTML = originalContents;
+      setTimeout(() => { render(); }, 100);
+    }
+
+    function saveStaticReport(reportType) {
+      const overall = calculateOverallStats();
+      const reports = { executive: generateExecutiveReport(overall), gap: generateGapReport(), roadmap: generateRoadmapReport(), synergy: generateSynergyReport() };
+      const reportTitles = { executive: 'Executive Summary', gap: 'Gap Analysis Report', roadmap: 'Implementation Roadmap', synergy: 'Framework Synergy Analysis' };
+      
+      const report = {
+        id: Date.now(),
+        title: reportTitles[reportType] || 'Report',
+        type: reportType,
+        company: state.selectedCompany?.name || 'Unknown',
+        framework: null,
+        timestamp: new Date().toLocaleString(),
+        content: reports[reportType]
+      };
+      
+      state.savedReports.unshift(report);
+      
+      try {
+        localStorage.setItem('trustelix_saved_reports', JSON.stringify(state.savedReports));
+      } catch (e) {
+        console.error('Failed to save report:', e);
+      }
+      
+      showToast('success', 'Report Saved', 'Access it from AI Analysis → Saved Reports');
+    }
+
+    function generateExecutiveReport(overall) {
+      const frameworkRows = Object.entries(FRAMEWORKS).map(([id, fw]) => {
+        const stats = calculateFrameworkStats(id);
+        const status = stats.percentage >= 80 ? 'Audit Ready' : stats.percentage >= 50 ? 'In Progress' : 'Needs Work';
+        const statusClass = stats.percentage >= 80 ? 'status-passing' : stats.percentage >= 50 ? 'status-pending' : 'status-failing';
+        return `<tr><td><strong>${fw.shortName}</strong></td><td>${stats.percentage}%</td><td>${stats.passing}/${stats.total}</td><td><span class="px-2 py-1 rounded text-xs font-medium ${statusClass}">${status}</span></td></tr>`;
+      }).join('');
+
+      // Calculate maturity distribution
+      let maturityDist = [0, 0, 0, 0, 0, 0];
+      Object.entries(FRAMEWORKS).forEach(([fwId, fw]) => {
+        fw.domains.forEach(d => d.controls.forEach(c => {
+          const lvl = getAssessmentLevel(fwId, c.id);
+          if (lvl !== null) maturityDist[lvl]++;
+        }));
+      });
+
+      return `
+        <div class="mb-8 text-center border-b pb-6"><h1 class="text-2xl font-bold text-gray-900">Executive Compliance Summary</h1><p class="text-gray-500">${state.selectedCompany?.name} | ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p></div>
+        
+        <h2>Key Metrics</h2>
+        <div class="grid grid-cols-4 gap-4 mb-8">
+          <div class="text-center p-4 bg-green-50 rounded-xl"><div class="text-3xl font-bold text-green-600">${overall.overallPercentage}%</div><div class="text-sm text-gray-600">Overall Compliance</div></div>
+          <div class="text-center p-4 bg-blue-50 rounded-xl"><div class="text-3xl font-bold text-blue-600">${overall.totalAssessed}</div><div class="text-sm text-gray-600">Controls Assessed</div></div>
+          <div class="text-center p-4 bg-purple-50 rounded-xl"><div class="text-3xl font-bold text-purple-600">${overall.totalPassing}</div><div class="text-sm text-gray-600">Controls Passing</div></div>
+          <div class="text-center p-4 bg-amber-50 rounded-xl"><div class="text-3xl font-bold text-amber-600">${overall.totalControls - overall.totalPassing}</div><div class="text-sm text-gray-600">Gaps Remaining</div></div>
+        </div>
+
+        <h2>Framework Status</h2>
+        <table><thead><tr><th>Framework</th><th>Readiness</th><th>Controls</th><th>Status</th></tr></thead><tbody>${frameworkRows}</tbody></table>
+
+        <h2>Maturity Distribution</h2>
+        <div class="grid grid-cols-6 gap-2 mb-8">
+          ${MATURITY_LEVELS.map((ml, i) => `<div class="text-center p-3 bg-gray-50 rounded-lg"><div class="text-xl font-bold text-gray-900">${maturityDist[i]}</div><div class="text-xs text-gray-500">Level ${i}</div><div class="text-xs text-gray-400">${ml.label}</div></div>`).join('')}
+        </div>
+
+        <h2>Executive Recommendations</h2>
+        <ol>
+          <li><strong>Priority Focus:</strong> Address Level 0-1 controls immediately - these represent significant compliance gaps.</li>
+          <li><strong>Quick Wins:</strong> Elevate Level 2 controls to Level 3 through documentation and standardization.</li>
+          <li><strong>Continuous Monitoring:</strong> Implement ongoing assessment cycles to maintain compliance posture.</li>
+        </ol>
+      `;
+    }
+
+    function generateGapReport() {
+      let criticalGaps = [], highGaps = [], mediumGaps = [];
+      Object.entries(FRAMEWORKS).forEach(([fwId, fw]) => {
+        fw.domains.forEach(domain => {
+          domain.controls.forEach(control => {
+            const level = getAssessmentLevel(fwId, control.id);
+            if (level === null || level === 0) criticalGaps.push({ fw: fw.shortName, id: control.id, name: control.name, level: level ?? 0 });
+            else if (level === 1) highGaps.push({ fw: fw.shortName, id: control.id, name: control.name, level });
+            else if (level === 2) mediumGaps.push({ fw: fw.shortName, id: control.id, name: control.name, level });
+          });
+        });
+      });
+
+      const renderGapTable = (gaps, color, limit = 20) => gaps.length === 0 ? '<p class="text-gray-500">No gaps in this category.</p>' :
+        `<table><thead><tr><th>Framework</th><th>Control</th><th>Name</th><th>Level</th></tr></thead><tbody>${gaps.slice(0, limit).map(g => `<tr><td>${g.fw}</td><td><code>${g.id}</code></td><td>${g.name}</td><td><span class="maturity-radio maturity-${g.level} inline-flex text-xs">${g.level}</span></td></tr>`).join('')}</tbody></table>${gaps.length > limit ? `<p class="text-sm text-gray-500 mt-2">+ ${gaps.length - limit} more...</p>` : ''}`;
+
+      return `
+        <div class="mb-8 text-center border-b pb-6"><h1 class="text-2xl font-bold text-gray-900">Gap Analysis Report</h1><p class="text-gray-500">${state.selectedCompany?.name} | ${new Date().toLocaleDateString()}</p></div>
+        
+        <div class="grid grid-cols-3 gap-4 mb-8">
+          <div class="p-4 bg-red-50 border border-red-200 rounded-xl text-center"><div class="text-3xl font-bold text-red-600">${criticalGaps.length}</div><div class="text-sm text-red-700">Critical (Level 0)</div></div>
+          <div class="p-4 bg-orange-50 border border-orange-200 rounded-xl text-center"><div class="text-3xl font-bold text-orange-600">${highGaps.length}</div><div class="text-sm text-orange-700">High (Level 1)</div></div>
+          <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-center"><div class="text-3xl font-bold text-yellow-600">${mediumGaps.length}</div><div class="text-sm text-yellow-700">Medium (Level 2)</div></div>
+        </div>
+
+        <h2 style="color: #dc2626;">Critical Priority (Level 0 - Not Implemented)</h2>
+        ${renderGapTable(criticalGaps, 'red')}
+
+        <h2 style="color: #ea580c;">High Priority (Level 1 - Initial)</h2>
+        ${renderGapTable(highGaps, 'orange')}
+
+        <h2 style="color: #ca8a04;">Medium Priority (Level 2 - Developing)</h2>
+        ${renderGapTable(mediumGaps, 'yellow')}
+
+        <h2>Remediation Recommendations</h2>
+        <ol>
+          <li><strong>Week 1-2:</strong> Document all Level 0 controls and assign owners</li>
+          <li><strong>Week 3-4:</strong> Implement foundational policies for critical gaps</li>
+          <li><strong>Month 2:</strong> Standardize Level 1 controls with formal procedures</li>
+          <li><strong>Month 3:</strong> Establish monitoring for all implemented controls</li>
+        </ol>
+      `;
+    }
+
+    function generateRoadmapReport() {
+      const overall = calculateOverallStats();
+      const gapCount = overall.totalControls - overall.totalPassing;
+      
+      // Calculate framework-specific recommendations
+      const fwRecommendations = Object.entries(FRAMEWORKS).map(([id, fw]) => {
+        const stats = calculateFrameworkStats(id);
+        return { name: fw.shortName, percentage: stats.percentage, gaps: stats.total - stats.passing };
+      }).sort((a, b) => a.percentage - b.percentage);
+
+      return `
+        <div class="mb-8 text-center border-b pb-6"><h1 class="text-2xl font-bold text-gray-900">Implementation Roadmap</h1><p class="text-gray-500">${state.selectedCompany?.name} | ${new Date().toLocaleDateString()}</p></div>
+        
+        <div class="p-6 bg-blue-50 border border-blue-200 rounded-xl mb-8">
+          <h3 class="font-semibold text-blue-800 mb-2">Current State Assessment</h3>
+          <p class="text-blue-700">With ${overall.overallPercentage}% overall compliance and ${gapCount} gaps remaining, we recommend a ${gapCount > 200 ? '6-month' : gapCount > 100 ? '90-day' : '60-day'} implementation timeline.</p>
+        </div>
+
+        <h2>Prioritized Framework Focus</h2>
+        <table><thead><tr><th>Priority</th><th>Framework</th><th>Current</th><th>Gaps</th><th>Recommended Timeline</th></tr></thead><tbody>
+          ${fwRecommendations.slice(0, 5).map((fw, i) => `<tr><td>${i + 1}</td><td><strong>${fw.name}</strong></td><td>${fw.percentage}%</td><td>${fw.gaps}</td><td>${fw.gaps > 30 ? '8 weeks' : fw.gaps > 15 ? '4 weeks' : '2 weeks'}</td></tr>`).join('')}
+        </tbody></table>
+
+        <h2>Phase 1: Foundation (Weeks 1-4)</h2>
+        <div class="p-6 border-l-4 border-red-500 bg-red-50 rounded-r-xl mb-4">
+          <ul class="text-sm text-red-700 space-y-2">
+            <li>• <strong>Governance:</strong> Establish information security policies and management commitment</li>
+            <li>• <strong>Asset Inventory:</strong> Document all information assets and their classifications</li>
+            <li>• <strong>Risk Assessment:</strong> Conduct initial risk assessment and treatment planning</li>
+            <li>• <strong>Access Control:</strong> Implement baseline access control mechanisms</li>
+          </ul>
+        </div>
+
+        <h2>Phase 2: Core Controls (Weeks 5-8)</h2>
+        <div class="p-6 border-l-4 border-amber-500 bg-amber-50 rounded-r-xl mb-4">
+          <ul class="text-sm text-amber-700 space-y-2">
+            <li>• <strong>Encryption:</strong> Deploy encryption for data at rest and in transit</li>
+            <li>• <strong>Monitoring:</strong> Implement logging, monitoring, and alerting</li>
+            <li>• <strong>Incident Response:</strong> Establish incident response procedures</li>
+            <li>• <strong>Training:</strong> Conduct security awareness training for all staff</li>
+          </ul>
+        </div>
+
+        <h2>Phase 3: Optimization (Weeks 9-12)</h2>
+        <div class="p-6 border-l-4 border-green-500 bg-green-50 rounded-r-xl mb-4">
+          <ul class="text-sm text-green-700 space-y-2">
+            <li>• <strong>Testing:</strong> Perform internal audits and penetration testing</li>
+            <li>• <strong>Documentation:</strong> Complete all required documentation and evidence</li>
+            <li>• <strong>Remediation:</strong> Address findings and close remaining gaps</li>
+            <li>• <strong>Certification:</strong> Prepare for external audit and certification</li>
+          </ul>
+        </div>
+      `;
+    }
+
+    function generateSynergyReport() {
+      // Calculate actual synergies
+      const controlAreas = [
+        { area: 'Access Control', frameworks: ['ISO 27001', 'SOC 2', 'NIST CSF', 'HIPAA', 'PCI DSS', 'CMMC'], controls: 45 },
+        { area: 'Risk Management', frameworks: ['ISO 27001', 'SOC 2', 'NIST CSF', 'GDPR'], controls: 20 },
+        { area: 'Incident Response', frameworks: ['ISO 27001', 'SOC 2', 'NIST CSF', 'HIPAA', 'PCI DSS'], controls: 15 },
+        { area: 'Data Protection', frameworks: ['ISO 27001', 'GDPR', 'HIPAA', 'PCI DSS'], controls: 25 },
+        { area: 'Encryption', frameworks: ['ISO 27001', 'HIPAA', 'PCI DSS', 'CMMC'], controls: 12 },
+        { area: 'Awareness & Training', frameworks: ['ISO 27001', 'SOC 2', 'HIPAA', 'PCI DSS', 'CMMC'], controls: 10 }
+      ];
+
+      return `
+        <div class="mb-8 text-center border-b pb-6"><h1 class="text-2xl font-bold text-gray-900">Framework Synergy Analysis</h1><p class="text-gray-500">${state.selectedCompany?.name} | ${new Date().toLocaleDateString()}</p></div>
+        
+        <div class="p-6 bg-purple-50 border border-purple-200 rounded-xl mb-8">
+          <h3 class="font-semibold text-purple-800 mb-2">Efficiency Opportunity</h3>
+          <p class="text-purple-700">By implementing controls once that satisfy multiple frameworks, you can reduce total implementation effort by an estimated 40-60%.</p>
+        </div>
+
+        <h2>Control Mapping by Domain</h2>
+        <table><thead><tr><th>Control Area</th><th>Frameworks Covered</th><th>Est. Controls</th><th>Efficiency</th></tr></thead><tbody>
+          ${controlAreas.map(ca => `<tr><td><strong>${ca.area}</strong></td><td>${ca.frameworks.join(', ')}</td><td>${ca.controls}</td><td><span class="text-green-600 font-medium">${ca.frameworks.length}x coverage</span></td></tr>`).join('')}
+        </tbody></table>
+
+        <h2>Framework Overlap Matrix</h2>
+        <p>The following frameworks share significant control requirements:</p>
+        <div class="grid grid-cols-2 gap-4 mt-4">
+          <div class="p-4 bg-gray-50 rounded-lg"><strong>ISO 27001 + SOC 2:</strong> ~70% overlap in security controls</div>
+          <div class="p-4 bg-gray-50 rounded-lg"><strong>NIST 800-171 + CMMC:</strong> ~95% overlap (CMMC is based on 800-171)</div>
+          <div class="p-4 bg-gray-50 rounded-lg"><strong>HIPAA + ISO 27001:</strong> ~60% overlap in technical controls</div>
+          <div class="p-4 bg-gray-50 rounded-lg"><strong>PCI DSS + ISO 27001:</strong> ~55% overlap in security domains</div>
+        </div>
+
+        <h2>Recommended Implementation Order</h2>
+        <ol>
+          <li><strong>Start with ISO 27001</strong> - Most comprehensive, provides foundation for all others</li>
+          <li><strong>Add SOC 2</strong> - Leverages ISO controls, adds service-specific criteria</li>
+          <li><strong>Extend to NIST CSF</strong> - Framework-agnostic, maps to existing controls</li>
+          <li><strong>Industry-specific</strong> - Add HIPAA, PCI, or CMMC based on requirements</li>
+        </ol>
+      `;
+    }
+
+    // =========================================================================
+    // AI ANALYSIS - COMPREHENSIVE
+    // =========================================================================
+    function renderAIAnalysis() {
+      const types = [
+        { id: 'gap', name: 'Gap Analysis', icon: 'fa-magnifying-glass-chart', color: 'blue', desc: 'Identify critical gaps' },
+        { id: 'audit', name: 'Audit Readiness', icon: 'fa-clipboard-check', color: 'green', desc: 'Prepare for audit' },
+        { id: 'policy', name: 'Policy Generator', icon: 'fa-file-lines', color: 'purple', desc: 'Generate policies' },
+        { id: 'roadmap', name: 'Compliance Roadmap', icon: 'fa-road', color: 'amber', desc: 'Implementation plan with deliverables' }
+      ];
+      
+      const reportTitles = {
+        gap: 'Gap Analysis Report',
+        audit: 'Audit Readiness Assessment',
+        policy: 'Policy Framework',
+        roadmap: 'Implementation Roadmap'
+      };
+      
+      return `
+        <div class="animate-fade-in">
+          <div class="flex items-center justify-between mb-6">
+            <div></div>
+            <button onclick="state.slidePanel = 'saved-reports'; render();" class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition flex items-center gap-2">
+              <i class="fas fa-folder-open"></i> Saved Reports (${state.savedReports.length})
+            </button>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            ${types.map(t => `
+              <button onclick="startAIAnalysis('${t.id}')" class="card p-6 text-left card-hover transition ${state.aiLoading ? 'opacity-50 cursor-not-allowed' : ''}" ${state.aiLoading ? 'disabled' : ''}>
+                <div class="w-12 h-12 bg-${t.color}-100 rounded-xl flex items-center justify-center mb-4"><i class="fas ${t.icon} text-${t.color}-600 text-xl"></i></div>
+                <h3 class="font-semibold text-gray-900">${t.name}</h3>
+                <p class="text-sm text-gray-500 mt-1">${t.desc}</p>
+              </button>
+            `).join('')}
+          </div>
+          
+          ${state.aiLoading ? `
+            <div class="card p-12 text-center">
+              <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                <i class="fas fa-spinner fa-spin text-blue-600 text-2xl"></i>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">AI Analysis in Progress</h3>
+              <p class="text-gray-500 mb-6">Generating ${reportTitles[state.aiAnalysisType] || 'report'}... This may take 30-60 seconds.</p>
+              <button onclick="cancelAIAnalysis()" class="px-6 py-2 bg-red-100 text-red-700 rounded-lg font-medium hover:bg-red-200 transition">
+                <i class="fas fa-times mr-2"></i>Cancel
+              </button>
+            </div>
+          ` : ''}
+          
+          ${state.aiError ? `
+            <div class="card p-6 border-2 border-red-200 bg-red-50">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="font-semibold text-red-800 mb-2">Analysis Error</h3>
+                  <p class="text-red-700 text-sm">${state.aiError}</p>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+          
+          ${state.aiResponse ? `
+            <div class="card" id="ai-report-content">
+              <!-- Report Header -->
+              <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h1 class="text-2xl font-bold text-gray-900">${state.aiReportTitle || 'AI Analysis Report'}</h1>
+                    <div class="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                      <span><i class="fas fa-building mr-1"></i>${state.selectedCompany?.name || 'Company'}</span>
+                      ${state.aiSelectedFramework ? `<span><i class="fas fa-shield-halved mr-1"></i>${FRAMEWORKS[state.aiSelectedFramework]?.name || ''}</span>` : ''}
+                      <span><i class="fas fa-calendar mr-1"></i>${state.aiReportTimestamp || new Date().toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div class="flex gap-2 no-print">
+                    <button onclick="exportReportToPDF()" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition flex items-center gap-2" title="Export to PDF">
+                      <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button onclick="saveAIReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition flex items-center gap-2" title="Save Report">
+                      <i class="fas fa-save"></i> Save
+                    </button>
+                    <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-2" title="Print">
+                      <i class="fas fa-print"></i> Print
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- Report Content -->
+              <div class="p-8">
+                <div class="ai-response">${state.aiResponse}</div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function cancelAIAnalysis() {
+      if (state.aiAbortController) {
+        state.aiAbortController.abort();
+      }
+      state.aiLoading = false;
+      state.aiError = 'Analysis cancelled by user';
+      state.aiAbortController = null;
+      render();
+    }
+
+    function saveAIReport() {
+      if (!state.aiResponse) return;
+      
+      const report = {
+        id: Date.now(),
+        title: state.aiReportTitle || 'AI Report',
+        type: state.aiAnalysisType,
+        company: state.selectedCompany?.name || 'Unknown',
+        framework: state.aiSelectedFramework ? FRAMEWORKS[state.aiSelectedFramework]?.name : null,
+        timestamp: state.aiReportTimestamp || new Date().toLocaleString(),
+        content: state.aiResponse
+      };
+      
+      state.savedReports.unshift(report);
+      
+      // Save to localStorage
+      try {
+        localStorage.setItem('trustelix_saved_reports', JSON.stringify(state.savedReports));
+      } catch (e) {
+        console.error('Failed to save report:', e);
+      }
+      
+      showToast('success', 'Report Saved', 'You can access it from Saved Reports');
+    }
+
+    function loadSavedReport(idx) {
+      const report = state.savedReports[idx];
+      if (!report) return;
+      
+      state.aiResponse = report.content;
+      state.aiReportTitle = report.title;
+      state.aiReportTimestamp = report.timestamp;
+      state.aiSelectedFramework = Object.keys(FRAMEWORKS).find(k => FRAMEWORKS[k].name === report.framework) || null;
+      state.aiAnalysisType = report.type;
+      state.showSavedReports = false;
+      render();
+    }
+
+    function deleteSavedReport(idx) {
+      const report = state.savedReports[idx];
+      showConfirm({
+        title: 'Delete Report',
+        message: `Are you sure you want to delete "${report?.title || 'this report'}"? This action cannot be undone.`,
+        type: 'danger',
+        confirmText: 'Delete',
+        cancelText: 'Keep',
+        onConfirm: () => {
+          state.savedReports.splice(idx, 1);
+          try {
+            localStorage.setItem('trustelix_saved_reports', JSON.stringify(state.savedReports));
+          } catch (e) {}
+          showToast('success', 'Report Deleted');
+          render();
+        }
+      });
+    }
+
+    function exportReportToPDF() {
+      // Use browser print dialog with PDF option
+      const printContent = document.getElementById('ai-report-content');
+      if (!printContent) { window.print(); return; }
+      
+      const originalContents = document.body.innerHTML;
+      const printContents = printContent.innerHTML;
+      
+      document.body.innerHTML = `
+        <html>
+          <head>
+            <title>${state.aiReportTitle || 'Report'}</title>
+            <style>
+              body { font-family: 'Inter', Arial, sans-serif; padding: 40px; line-height: 1.6; }
+              h1 { font-size: 24px; color: #1e3a8a; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+              h2 { font-size: 18px; color: #1e40af; margin-top: 24px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+              h3 { font-size: 16px; color: #1e3a8a; margin-top: 16px; }
+              table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+              th { background: #1e3a8a; color: white; padding: 10px; text-align: left; }
+              td { padding: 10px; border: 1px solid #ddd; }
+              tr:nth-child(even) { background: #f9fafb; }
+              ul, ol { margin-left: 20px; }
+              li { margin-bottom: 8px; }
+              .no-print { display: none !important; }
+            </style>
+          </head>
+          <body>${printContents}</body>
+        </html>
+      `;
+      
+      window.print();
+      document.body.innerHTML = originalContents;
+      
+      // Re-initialize the app
+      setTimeout(() => { render(); }, 100);
+    }
+
+    function startAIAnalysis(type) {
+      // All analysis types now use framework selection
+      state.aiAnalysisType = type;
+      state.aiSelectedFramework = null;
+      state.aiSelectedFrameworks = [];
+      state.slidePanel = 'framework-select';
+      render();
+    }
+
+    function runAIWithFramework(frameworkId) {
+      state.slidePanel = null;
+      state.aiSelectedFramework = frameworkId;
+      runAIAnalysis(state.aiAnalysisType, frameworkId);
+    }
+
+    async function runAIAnalysis(type, frameworkId) {
+      if (state.aiLoading) return;
+      state.aiLoading = true;
+      state.aiError = null;
+      state.aiResponse = null;
+      state.aiAbortController = new AbortController();
+      
+      // Determine which frameworks to analyze - use selected frameworks for ALL report types
+      const selectedFrameworks = state.aiSelectedFrameworks.length > 0 
+        ? state.aiSelectedFrameworks 
+        : (frameworkId ? [frameworkId] : Object.keys(FRAMEWORKS));
+      
+      const isMultiFramework = selectedFrameworks.length > 1;
+      const frameworkNames = selectedFrameworks.map(id => FRAMEWORKS[id]?.shortName || id).join(', ');
+      
+      // Set report metadata
+      const reportTitles = {
+        gap: 'Gap Analysis Report',
+        audit: 'Audit Readiness Assessment',
+        policy: 'Policy Framework',
+        roadmap: 'Implementation Roadmap'
+      };
+      state.aiReportTitle = reportTitles[type] || 'AI Report';
+      if (isMultiFramework) {
+        state.aiReportTitle += ` - ${selectedFrameworks.length} Frameworks`;
+      } else if (selectedFrameworks.length === 1 && FRAMEWORKS[selectedFrameworks[0]]) {
+        state.aiReportTitle += ` - ${FRAMEWORKS[selectedFrameworks[0]].name}`;
+      }
+      state.aiReportTimestamp = new Date().toLocaleString();
+      
+      render();
+
+      try {
+        // Build comprehensive prompt based on analysis type
+        const overall = calculateOverallStats();
+        const fw = selectedFrameworks.length === 1 ? FRAMEWORKS[selectedFrameworks[0]] : null;
+        const fwStats = fw ? calculateFrameworkStats(selectedFrameworks[0]) : null;
+        
+        // Gather basic assessment data for selected frameworks
+        let assessmentSummary = '';
+        selectedFrameworks.forEach(id => {
+          const f = FRAMEWORKS[id];
+          if (f) {
+            const stats = calculateFrameworkStats(id);
+            assessmentSummary += `${f.shortName}: ${stats.percentage}% ready (${stats.passing}/${stats.total} controls passing)\n`;
+          }
+        });
+        
+        // Build detailed control status for selected framework(s)
+        let detailedControlStatus = '';
+        let passingControls = [];
+        let failingControls = [];
+        
+        // Gather data from all selected frameworks
+        selectedFrameworks.forEach(fwId => {
+          const framework = FRAMEWORKS[fwId];
+          if (framework) {
+            framework.domains.forEach(domain => {
+              domain.controls.forEach(control => {
+                const level = getAssessmentLevel(fwId, control.id);
+                if (level !== null && level >= 3) {
+                  passingControls.push({ framework: framework.shortName, id: control.id, name: control.name, level });
+                } else {
+                  failingControls.push({ framework: framework.shortName, id: control.id, name: control.name, level: level ?? 0 });
+                }
+              });
+            });
+          }
+        });
+        
+        detailedControlStatus = `
+CONTROLS ALREADY IMPLEMENTED (Level 3+): ${passingControls.length} controls
+${passingControls.slice(0, 20).map(c => `✅ [${c.framework}] ${c.id}: ${c.name} (Level ${c.level})`).join('\n')}
+${passingControls.length > 20 ? `\n... and ${passingControls.length - 20} more implemented controls` : ''}
+
+CONTROLS NEEDING WORK (Level 0-2): ${failingControls.length} controls
+${failingControls.slice(0, 30).map(c => `❌ [${c.framework}] ${c.id}: ${c.name} (Level ${c.level})`).join('\n')}
+${failingControls.length > 30 ? `\n... and ${failingControls.length - 30} more controls needing attention` : ''}
+`;
+
+        let prompt = '';
+        switch (type) {
+          case 'gap':
+            prompt = `Analyze the compliance gaps for ${state.selectedCompany?.name}.
+
+SCOPE: ${isMultiFramework ? `Multiple frameworks: ${frameworkNames}` : `Single framework: ${frameworkNames}`}
+
+Current Assessment Status:
+${assessmentSummary}
+Overall: ${overall.overallPercentage}% compliance, ${overall.totalPassing}/${overall.totalControls} controls passing.
+
+${detailedControlStatus}
+
+Generate a comprehensive Gap Analysis Report with the following sections:
+
+1. EXECUTIVE SUMMARY
+   - Overall compliance posture
+   - Key findings summary
+   - Immediate priorities
+
+2. GAP ANALYSIS DASHBOARD (HTML table)
+   Create a visual summary table showing each framework's status:
+   Columns: Framework | Total Controls | Implemented | Gaps | % Complete | Priority
+   Use color coding: Green (>80%), Amber (50-80%), Red (<50%)
+
+3. CRITICAL GAPS BY FRAMEWORK
+   For each framework analyzed, create a table:
+   Columns: Control ID | Control Name | Current Level | Gap Description | Risk Level | Remediation Priority
+   ${isMultiFramework ? 'Group by framework with clear headers' : ''}
+
+4. COMMON CONTROL DEFICIENCIES
+   Identify patterns across ${isMultiFramework ? 'frameworks' : 'control domains'}:
+   - List the most common gap areas
+   - Root cause analysis
+   - Cross-framework impact ${isMultiFramework ? '(which frameworks are affected by each gap)' : ''}
+
+5. REMEDIATION ROADMAP TABLE
+   Columns: Priority | Gap/Control | Remediation Action | Owner | Effort | Timeline | Dependencies
+   Include at least 15 specific remediation items
+
+6. QUICK WINS TABLE
+   Columns: Control | Current State | Action Required | Effort | Impact
+   Focus on low-effort, high-impact improvements
+
+7. RESOURCE REQUIREMENTS
+   - Personnel needs
+   - Tools/technology
+   - Training requirements
+   - Budget estimates
+
+8. RISK ASSESSMENT
+   Table showing gaps prioritized by risk:
+   Columns: Gap | Likelihood | Impact | Risk Score | Mitigation Priority
+
+Make all tables professional with proper formatting. Mark items as ✅ (implemented), ⚠️ (partial), or ❌ (gap) based on the assessment data provided.`;
+            break;
+            
+          case 'audit':
+            prompt = `Prepare a comprehensive ${fw?.name || 'compliance'} AUDIT READINESS ASSESSMENT for ${state.selectedCompany?.name}.
+
+Framework: ${fw?.name || 'Multi-framework'}
+Current Status: ${fwStats?.percentage || overall.overallPercentage}% ready
+Controls Assessed: ${fwStats?.assessed || overall.totalAssessed}/${fwStats?.total || overall.totalControls}
+Controls Passing (Level 3+): ${fwStats?.passing || overall.totalPassing}
+
+${detailedControlStatus}
+
+IMPORTANT: For EVERY item you list, mark its current status based on the assessment data above:
+- Use ✅ for items that EXIST (controls at Level 3+)
+- Use ❌ for items that are MISSING or INCOMPLETE (controls at Level 0-2)
+- Use ⚠️ for items that are PARTIALLY complete
+
+Generate a detailed audit preparation guide with the following sections:
+
+1. EXECUTIVE SUMMARY
+   - Overall readiness score and recommendation (Ready / Not Ready / Conditionally Ready)
+   - Key strengths (what's already in place)
+   - Critical gaps that must be addressed
+
+2. AUDIT READINESS CHECKLIST
+   Create an HTML table with columns: Item | Status | Evidence Required | Notes
+   Mark each item with ✅ EXISTS, ❌ MISSING, or ⚠️ PARTIAL based on assessment data
+   Include 15-20 key audit items
+
+3. DOCUMENTATION STATUS TABLE
+   Columns: Document | Status | Owner | Last Updated | Action Required
+   Include: Policies, Procedures, Risk Assessments, Asset Inventories, Training Records
+   Mark status based on related control assessments
+
+4. CONTROL DOMAIN READINESS
+   For each domain, show:
+   - Domain name
+   - Controls implemented vs total
+   - Specific controls that are ✅ ready vs ❌ need work
+
+5. EVIDENCE COLLECTION CHECKLIST
+   Columns: Evidence Type | Related Controls | Status | Collection Method
+   Mark what evidence likely exists vs what needs to be collected
+
+6. EXPECTED AUDITOR QUESTIONS
+   Group by domain, indicate which questions you're ready for (✅) vs not ready (❌)
+
+7. PRE-AUDIT ACTION ITEMS
+   Priority-ordered list of what to fix before audit, with effort estimates
+
+8. TIMELINE TO AUDIT READINESS
+   Based on current status, realistic timeline to be audit-ready`;
+            break;
+            
+          case 'policy':
+            prompt = `Generate a ${fw?.name || 'information security'} POLICY ASSESSMENT AND GENERATION GUIDE for ${state.selectedCompany?.name}.
+
+Framework: ${fw?.name || 'General'}
+Current Compliance: ${fwStats?.percentage || overall.overallPercentage}%
+
+${detailedControlStatus}
+
+IMPORTANT INSTRUCTIONS:
+1. Based on the control assessment data above, identify which policies ALREADY EXIST (controls at Level 3+) vs which are MISSING (controls at Level 0-2)
+2. For policies that exist, acknowledge them and suggest improvements
+3. For policies that are missing, offer to generate them
+
+Generate the following:
+
+1. POLICY INVENTORY STATUS TABLE
+   Create an HTML table with columns: Policy Name | Related Controls | Status | Priority | Action
+   - Mark ✅ EXISTS for policies where related controls are Level 3+
+   - Mark ❌ NEEDED for policies where related controls are Level 0-2
+   - Mark ⚠️ UPDATE NEEDED for policies that exist but need enhancement
+   
+   Include these policy categories:
+   - Information Security Policy
+   - Access Control Policy
+   - Acceptable Use Policy
+   - Data Classification Policy
+   - Incident Response Policy
+   - Business Continuity Policy
+   - Vendor Management Policy
+   - Change Management Policy
+   - Password/Authentication Policy
+   - Physical Security Policy
+   - HR Security Policy
+   - Asset Management Policy
+   - Encryption Policy
+   - Network Security Policy
+   - Monitoring & Logging Policy
+
+2. POLICIES THAT EXIST (based on Level 3+ controls)
+   For each existing policy area:
+   - Acknowledge it exists
+   - Suggest review/enhancement areas
+   - Note any gaps within the policy scope
+
+3. POLICIES THAT NEED TO BE CREATED (based on Level 0-2 controls)
+   For each missing policy:
+   - Explain why it's needed
+   - Outline key sections to include
+   - Provide priority rating
+   - Offer sample policy template/outline
+
+4. POLICY FRAMEWORK OVERVIEW
+   - Recommended policy hierarchy
+   - Policy ownership matrix
+   - Review and approval process
+   - Update frequency recommendations
+
+5. SAMPLE POLICY CONTENT
+   For the TOP 3 MISSING POLICIES (highest priority), provide:
+   - Full policy template with sections
+   - Sample policy statements
+   - Implementation guidance
+
+6. POLICY IMPLEMENTATION ROADMAP
+   Timeline for creating/updating all policies`;
+            break;
+            
+          case 'roadmap':
+            prompt = `Create an ${fw?.name || 'compliance'} IMPLEMENTATION ROADMAP for ${state.selectedCompany?.name}.
+
+Current Status: ${fwStats?.percentage || overall.overallPercentage}% compliant (${fwStats?.passing || overall.totalPassing}/${fwStats?.total || overall.totalControls} controls)
+
+IMPORTANT: Complete ALL sections below. Keep each table concise but complete.
+
+## 1. PROJECT OVERVIEW
+| Metric | Value |
+|--------|-------|
+| Company | ${state.selectedCompany?.name} |
+| Framework | ${fw?.name || 'Multi-framework'} |
+| Current State | ${fwStats?.percentage || overall.overallPercentage}% |
+| Target State | 100% |
+| Duration | 12 weeks |
+| Controls Done | ${fwStats?.passing || overall.totalPassing} |
+| Controls Remaining | ${fwStats ? (fwStats.total - fwStats.passing) : (overall.totalControls - overall.totalPassing)} |
+
+## 2. GANTT TIMELINE (12 weeks)
+Create a table with columns: Task | Owner | W1-W12
+Use ● to mark active weeks. Include 12-15 key tasks.
+
+## 3. DELIVERABLES REGISTER
+Create a table with these 15 deliverables (ID | Deliverable | Owner | Due | Status):
+- D001: Project Charter (PM, W1)
+- D002: Stakeholder Register (PM, W1)  
+- D003: Gap Assessment Report (Security Lead, W2)
+- D004: Information Security Policy (CISO, W3)
+- D005: Risk Assessment (Security Lead, W3)
+- D006: Asset Inventory (IT Lead, W4)
+- D007: Access Control Procedures (IT Lead, W5)
+- D008: Incident Response Plan (Security Lead, W6)
+- D009: Business Continuity Plan (Operations, W6)
+- D010: Vendor Risk Framework (Procurement, W7)
+- D011: Security Training Program (HR, W7)
+- D012: Change Management Process (IT Lead, W8)
+- D013: Internal Audit Plan (Security Lead, W9)
+- D014: Evidence Collection Package (Security Lead, W10)
+- D015: Audit Readiness Report (Security Lead, W12)
+
+## 4. PHASE BREAKDOWN
+**Phase 1: Foundation (Weeks 1-4)** - Setup, assessment, policies
+**Phase 2: Implementation (Weeks 5-8)** - Controls, procedures, training  
+**Phase 3: Audit Prep (Weeks 9-12)** - Testing, evidence, readiness
+
+For each phase include: Objectives, Key Deliverables, Success Criteria
+
+## 5. RACI MATRIX
+Create table: Activity | Exec Sponsor | CISO | IT Lead | HR
+Include 8 key activities with R/A/C/I assignments.
+
+## 6. TOP 5 RISKS
+Table: Risk | Impact | Likelihood | Mitigation | Owner
+
+## 7. KEY MILESTONES  
+Table: Week | Milestone | Go/No-Go Criteria
+
+Keep tables formatted with HTML. Use colored backgrounds for phases (Phase 1: #fee2e2, Phase 2: #fef3c7, Phase 3: #d1fae5).`;
+            break;
+        }
+
+        const response = await api('/api/ai/analyze', {
+          method: 'POST',
+          body: JSON.stringify({ prompt, type, analysisType: type })
+        });
+
+        if (response.error) throw new Error(response.error);
+        state.aiResponse = response.analysis;
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          state.aiError = 'Analysis cancelled';
+        } else {
+          state.aiError = e.message;
+        }
+      } finally {
+        state.aiLoading = false;
+        state.aiAbortController = null;
+        render();
+      }
+    }
+
+    // =========================================================================
+    // HISTORY
+    // =========================================================================
+    function renderHistory() {
+      return `
+        <div class="animate-fade-in">
+          <div class="card overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-gray-50 border-b border-gray-200"><tr><th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Time</th><th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Framework</th><th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Control</th><th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Level</th><th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Type</th></tr></thead>
+              <tbody>
+                ${(state.history || []).map(item => `
+                  <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-4 px-6 text-sm text-gray-600">${new Date(item.timestamp).toLocaleString()}</td>
+                    <td class="py-4 px-6"><span class="px-2 py-1 bg-gray-100 rounded text-sm font-medium">${item.frameworkId || 'N/A'}</span></td>
+                    <td class="py-4 px-6 font-mono text-sm">${item.controlId || 'N/A'}</td>
+                    <td class="py-4 px-6"><span class="maturity-radio maturity-${item.level || 0} inline-flex">${item.level ?? '?'}</span></td>
+                    <td class="py-4 px-6">${item.isPropagated ? '<span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">Auto</span>' : '<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">Manual</span>'}</td>
+                  </tr>
+                `).join('') || '<tr><td colspan="5" class="py-12 text-center text-gray-500">No history</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // ADMIN - COMPREHENSIVE
+    // =========================================================================
+    function renderAdmin() {
+      if (state.user?.role !== 'admin') return '<div class="text-center py-12 text-gray-500">Access denied</div>';
+      return `
+        <div class="animate-fade-in">
+          <div class="flex gap-2 mb-6">
+            ${['users', 'analytics', 'errors', 'feedback'].map(tab => `
+              <button onclick="state.adminTab = '${tab}'; render();" class="px-4 py-2 rounded-lg text-sm font-medium transition ${state.adminTab === tab ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}">${tab.charAt(0).toUpperCase() + tab.slice(1)}</button>
+            `).join('')}
+          </div>
+          ${state.adminTab === 'users' ? renderAdminUsers() : ''}
+          ${state.adminTab === 'analytics' ? renderAdminAnalytics() : ''}
+          ${state.adminTab === 'errors' ? renderAdminErrors() : ''}
+          ${state.adminTab === 'feedback' ? renderAdminFeedback() : ''}
+        </div>
+      `;
+    }
+
+    function renderAdminUsers() {
+      return `
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-6"><h2 class="text-lg font-semibold text-gray-900">User Management</h2><button onclick="state.slidePanel = 'create-user'; render();" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"><i class="fas fa-plus mr-2"></i>Add User</button></div>
+          <table class="w-full">
+            <thead class="bg-gray-50"><tr><th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Name</th><th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Username</th><th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Email</th><th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Role</th><th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Actions</th></tr></thead>
+            <tbody>
+              ${state.adminUsers.map(user => `
+                <tr class="border-t border-gray-100">
+                  <td class="py-3 px-4">${user.name || '-'}</td>
+                  <td class="py-3 px-4 font-mono text-sm">${user.username || '-'}</td>
+                  <td class="py-3 px-4">${user.email}</td>
+                  <td class="py-3 px-4"><span class="px-2 py-1 rounded text-xs font-medium ${user.role === 'admin' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}">${user.role || 'user'}</span></td>
+                  <td class="py-3 px-4">
+                    <div class="flex gap-2">
+                      ${user.role !== 'admin' ? `<button onclick="updateUserRole('${user.id}', 'admin')" class="text-blue-600 hover:text-blue-800" title="Make Admin"><i class="fas fa-user-shield"></i></button>` : `<button onclick="updateUserRole('${user.id}', 'user')" class="text-gray-600 hover:text-gray-800" title="Remove Admin"><i class="fas fa-user"></i></button>`}
+                      ${user.id !== state.user.id ? `<button onclick="deleteUser('${user.id}', '${(user.name || user.email).replace(/'/g, "\\'")}')" class="text-red-600 hover:text-red-800" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderAdminAnalytics() {
+      const data = state.adminAnalytics || {};
+      const users = data.users || {};
+      const activity = data.activity || {};
+      const companies = data.companies || {};
+      return `
+        <div class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="card p-6"><div class="text-3xl font-bold text-blue-600">${users.total || 0}</div><div class="text-sm text-gray-600 mt-1">Total Users</div><div class="text-xs text-gray-400 mt-1">${users.admins || 0} admins</div></div>
+            <div class="card p-6"><div class="text-3xl font-bold text-green-600">${companies.total || 0}</div><div class="text-sm text-gray-600 mt-1">Companies</div></div>
+            <div class="card p-6"><div class="text-3xl font-bold text-purple-600">${companies.totalAssessments || 0}</div><div class="text-sm text-gray-600 mt-1">Assessments</div></div>
+            <div class="card p-6"><div class="text-3xl font-bold text-amber-600">${activity.actionsThisWeek || 0}</div><div class="text-sm text-gray-600 mt-1">Actions This Week</div><div class="text-xs text-gray-400 mt-1">${activity.actionsToday || 0} today</div></div>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card p-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+              <div class="space-y-3 max-h-80 overflow-y-auto">
+                ${(activity.recentActions || []).slice(0, 15).map(action => `
+                  <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-bolt text-blue-600 text-xs"></i></div>
+                    <div class="flex-1 min-w-0"><div class="font-medium text-gray-900 truncate">${action.action || 'Action'}</div><div class="text-sm text-gray-500 truncate">${action.details || ''}</div></div>
+                    <div class="text-xs text-gray-400 flex-shrink-0">${formatTimeAgo(action.timestamp)}</div>
+                  </div>
+                `).join('') || '<p class="text-gray-500 text-center py-4">No recent activity</p>'}
+              </div>
+            </div>
+            
+            <div class="card p-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Popular Actions</h3>
+              <div class="space-y-3">
+                ${(activity.popularActions || []).slice(0, 8).map((item, i) => `
+                  <div class="flex items-center gap-4">
+                    <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium text-gray-600">${i + 1}</div>
+                    <div class="flex-1"><div class="font-medium text-gray-900">${item.action}</div></div>
+                    <div class="text-sm font-medium text-gray-600">${item.count}x</div>
+                  </div>
+                `).join('') || '<p class="text-gray-500 text-center py-4">No data</p>'}
+              </div>
+            </div>
+          </div>
+          
+          <div class="card p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">User Growth</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="p-4 bg-blue-50 rounded-lg text-center"><div class="text-2xl font-bold text-blue-600">${users.newThisWeek || 0}</div><div class="text-xs text-gray-600">New This Week</div></div>
+              <div class="p-4 bg-green-50 rounded-lg text-center"><div class="text-2xl font-bold text-green-600">${users.newThisMonth || 0}</div><div class="text-xs text-gray-600">New This Month</div></div>
+              <div class="p-4 bg-purple-50 rounded-lg text-center"><div class="text-2xl font-bold text-purple-600">${users.admins || 0}</div><div class="text-xs text-gray-600">Admin Users</div></div>
+              <div class="p-4 bg-amber-50 rounded-lg text-center"><div class="text-2xl font-bold text-amber-600">${users.total - (users.admins || 0)}</div><div class="text-xs text-gray-600">Regular Users</div></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminErrors() {
+      return `
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-gray-900">Error Logs</h2>
+            <button onclick="clearErrorLogs()" class="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition">Clear All</button>
+          </div>
+          <div class="space-y-4">
+            ${state.adminErrors.length > 0 ? state.adminErrors.slice(0, 20).map(err => `
+              <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div class="flex items-start justify-between">
+                  <div><div class="font-medium text-red-800">${err.message || 'Error'}</div><div class="text-sm text-red-600 mt-1">${err.context || ''}</div></div>
+                  <div class="text-xs text-red-400">${new Date(err.timestamp).toLocaleString()}</div>
+                </div>
+                ${err.stack ? `<pre class="mt-2 text-xs text-red-700 bg-red-100 p-2 rounded overflow-x-auto">${err.stack.slice(0, 200)}...</pre>` : ''}
+              </div>
+            `).join('') : '<p class="text-gray-500 text-center py-8">No errors logged</p>'}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminFeedback() {
+      const stats = state.adminFeedback?.stats || {};
+      const items = state.adminFeedback?.items || [];
+      return `
+        <div class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">User Feedback</h2>
+            <button onclick="loadAdminData()" class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition flex items-center gap-2">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="card p-6"><div class="text-3xl font-bold text-blue-600">${stats.total || 0}</div><div class="text-sm text-gray-600 mt-1">Total Feedback</div></div>
+            <div class="card p-6"><div class="text-3xl font-bold text-yellow-600">${stats.averageRating || '-'}</div><div class="text-sm text-gray-600 mt-1">Avg Rating</div></div>
+            <div class="card p-6"><div class="text-3xl font-bold text-green-600">${stats.byType?.enhancement || 0}</div><div class="text-sm text-gray-600 mt-1">Enhancements</div></div>
+            <div class="card p-6"><div class="text-3xl font-bold text-red-600">${stats.byType?.bug || 0}</div><div class="text-sm text-gray-600 mt-1">Bugs</div></div>
+          </div>
+          <div class="card p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Feedback Items (${items.length})</h3>
+            <div class="space-y-4">
+              ${items.length === 0 ? `
+                <div class="text-center py-12 text-gray-500">
+                  <i class="fas fa-comments text-4xl mb-4"></i>
+                  <p>No feedback submitted yet</p>
+                  <p class="text-sm mt-2">User feedback will appear here</p>
+                </div>
+              ` : items.map(fb => `
+                <div class="p-4 bg-gray-50 rounded-lg border ${fb.status === 'resolved' ? 'border-green-200 bg-green-50' : fb.status === 'reviewed' ? 'border-blue-200 bg-blue-50' : 'border-purple-200'}">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class="text-yellow-500">${'★'.repeat(fb.rating || 0)}${'☆'.repeat(5 - (fb.rating || 0))}</span>
+                        <span class="px-2 py-1 rounded text-xs font-medium ${fb.type === 'bug' ? 'bg-red-100 text-red-700' : fb.type === 'enhancement' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">${fb.type || 'feedback'}</span>
+                        <span class="px-2 py-1 rounded text-xs font-medium ${fb.status === 'resolved' ? 'bg-green-100 text-green-700' : fb.status === 'reviewed' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}">${fb.status || 'new'}</span>
+                      </div>
+                      <p class="text-gray-700">${fb.message || 'No message'}</p>
+                      <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                        <span><i class="fas fa-user mr-1"></i>${fb.userEmail || 'Anonymous'}</span>
+                        <span><i class="fas fa-clock mr-1"></i>${fb.createdAt ? new Date(fb.createdAt).toLocaleString() : 'Unknown'}</span>
+                      </div>
+                    </div>
+                    <select onchange="updateFeedbackStatus('${fb.id}', this.value)" class="text-sm border border-gray-200 rounded px-3 py-2 bg-white">
+                      <option value="new" ${fb.status === 'new' ? 'selected' : ''}>New</option>
+                      <option value="reviewed" ${fb.status === 'reviewed' ? 'selected' : ''}>Reviewed</option>
+                      <option value="resolved" ${fb.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                    </select>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function loadAdminData() {
+      try {
+        state.adminUsers = await api('/api/admin/users');
+        state.adminAnalytics = await api('/api/admin/analytics');
+        state.adminErrors = await api('/api/admin/errors');
+        const fbData = await api('/api/admin/feedback');
+        state.adminFeedback = { items: fbData.feedback || [], stats: fbData.stats || {} };
+      } catch (e) { console.error('Failed to load admin data:', e); }
+      render();
+    }
+
+    async function updateUserRole(userId, role) {
+      try { 
+        await api(`/api/admin/users/${userId}/role`, { method: 'PUT', body: JSON.stringify({ role }) }); 
+        loadAdminData();
+        showToast('success', 'Role Updated', `User role changed to ${role}`);
+      } catch (e) { 
+        showToast('error', 'Failed', e.message); 
+      }
+    }
+
+    async function deleteUser(userId, userName) {
+      showConfirm({
+        title: 'Delete User',
+        message: `Are you sure you want to delete ${userName || 'this user'}? This action cannot be undone.`,
+        type: 'danger',
+        confirmText: 'Delete User',
+        cancelText: 'Cancel',
+        onConfirm: async () => {
+          try { 
+            await api(`/api/admin/users/${userId}`, { method: 'DELETE' }); 
+            loadAdminData();
+            showToast('success', 'User Deleted');
+          } catch (e) { 
+            showToast('error', 'Failed', e.message); 
+          }
+        }
+      });
+    }
+
+    async function clearErrorLogs() {
+      showConfirm({
+        title: 'Clear Error Logs',
+        message: 'Are you sure you want to clear all error logs? This action cannot be undone.',
+        type: 'warning',
+        confirmText: 'Clear Logs',
+        cancelText: 'Cancel',
+        onConfirm: async () => {
+          try { 
+            await api('/api/admin/errors', { method: 'DELETE' }); 
+            loadAdminData();
+            showToast('success', 'Logs Cleared');
+          } catch (e) { 
+            showToast('error', 'Failed', e.message); 
+          }
+        }
+      });
+    }
+
+    async function updateFeedbackStatus(feedbackId, status) {
+      try { 
+        await api(`/api/admin/feedback/${feedbackId}`, { method: 'PUT', body: JSON.stringify({ status }) }); 
+        loadAdminData();
+        showToast('success', 'Status Updated');
+      } catch (e) { 
+        showToast('error', 'Failed', e.message); 
+      }
+    }
+
+    // =========================================================================
+    // FEEDBACK
+    // =========================================================================
+    async function submitFeedback() {
+      const message = document.getElementById('feedback-message')?.value;
+      try {
+        await api('/api/feedback', { method: 'POST', body: JSON.stringify({ rating: state.feedbackRating, type: state.feedbackType, message }) });
+        closeSlidePanel();
+        state.feedbackRating = 0;
+        state.feedbackMessage = '';
+        showToast('success', 'Thank You!', 'Your feedback has been submitted');
+      } catch (e) { 
+        showToast('error', 'Failed', e.message); 
+      }
+      render();
+    }
+
+    // =========================================================================
+    // TOAST NOTIFICATIONS
+    // =========================================================================
+    function showToast(type, title, message = '') {
+      const id = Date.now();
+      state.toasts.push({ id, type, title, message });
+      render();
+      
+      // Auto-remove after 4 seconds
+      setTimeout(() => {
+        removeToast(id);
+      }, 4000);
+    }
+
+    function removeToast(id) {
+      const idx = state.toasts.findIndex(t => t.id === id);
+      if (idx > -1) {
+        state.toasts.splice(idx, 1);
+        render();
+      }
+    }
+
+    function renderToasts() {
+      if (state.toasts.length === 0) return '';
+      
+      const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-times-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+      };
+      
+      return `
+        <div class="toast-container">
+          ${state.toasts.map(t => `
+            <div class="toast toast-${t.type}">
+              <i class="fas ${icons[t.type]} toast-icon"></i>
+              <div class="toast-content">
+                <div class="toast-title">${t.title}</div>
+                ${t.message ? `<div class="toast-message">${t.message}</div>` : ''}
+              </div>
+              <button class="toast-close" onclick="removeToast(${t.id})">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // CONFIRMATION DIALOG
+    // =========================================================================
+    function showConfirm(options) {
+      state.confirmDialog = {
+        title: options.title || 'Confirm',
+        message: options.message || 'Are you sure?',
+        type: options.type || 'warning', // danger, warning, info, success
+        confirmText: options.confirmText || 'Confirm',
+        cancelText: options.cancelText || 'Cancel',
+        onConfirm: options.onConfirm || (() => {}),
+        onCancel: options.onCancel || (() => {})
+      };
+      render();
+    }
+
+    function closeConfirm(confirmed) {
+      if (state.confirmDialog) {
+        if (confirmed && state.confirmDialog.onConfirm) {
+          state.confirmDialog.onConfirm();
+        } else if (!confirmed && state.confirmDialog.onCancel) {
+          state.confirmDialog.onCancel();
+        }
+      }
+      state.confirmDialog = null;
+      render();
+    }
+
+    function renderConfirmDialog() {
+      if (!state.confirmDialog) return '';
+      
+      const icons = {
+        danger: 'fa-trash-alt',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle',
+        success: 'fa-check-circle'
+      };
+      
+      const btnClass = state.confirmDialog.type === 'danger' ? 'confirm-btn-danger' : 'confirm-btn-primary';
+      
+      return `
+        <div class="confirm-overlay" onclick="if(event.target === this) closeConfirm(false)">
+          <div class="confirm-dialog">
+            <div class="confirm-header">
+              <div class="confirm-icon ${state.confirmDialog.type}">
+                <i class="fas ${icons[state.confirmDialog.type]} text-xl"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900">${state.confirmDialog.title}</h3>
+              </div>
+            </div>
+            <div class="confirm-body">
+              <p class="text-gray-600">${state.confirmDialog.message}</p>
+            </div>
+            <div class="confirm-footer">
+              <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirm(false)">
+                ${state.confirmDialog.cancelText}
+              </button>
+              <button class="confirm-btn ${btnClass}" onclick="closeConfirm(true)">
+                ${state.confirmDialog.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // UTILITIES
+    // =========================================================================
+    function formatTimeAgo(timestamp) {
+      if (!timestamp) return 'Unknown';
+      const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
+      if (seconds < 60) return 'Just now';
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+      return `${Math.floor(seconds / 86400)}d ago`;
+    }
+
+    // =========================================================================
+    // INITIALIZATION
+    // =========================================================================
+    async function init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const resetToken = urlParams.get('reset');
+      if (resetToken) { state.authMode = 'reset'; state.resetToken = resetToken; }
+      const oauthToken = urlParams.get('token');
+      if (oauthToken) { state.token = oauthToken; localStorage.setItem('trustelix_token', oauthToken); window.history.replaceState({}, '', '/'); }
+      
+      // Load saved reports from localStorage
+      try {
+        const savedReports = localStorage.getItem('trustelix_saved_reports');
+        if (savedReports) {
+          state.savedReports = JSON.parse(savedReports);
+        }
+      } catch (e) {
+        console.error('Failed to load saved reports:', e);
+        state.savedReports = [];
+      }
+      
+      try { state.oauthConfig = await api('/api/auth/oauth-config'); } catch (e) {}
+      if (state.token) {
+        try { state.user = await api('/api/auth/me'); state.isAuthenticated = true; await loadCompanies(); }
+        catch (e) { state.token = null; localStorage.removeItem('trustelix_token'); }
+      }
+      render();
+    }
+    init();
+  </script>
+</body>
+</html>
